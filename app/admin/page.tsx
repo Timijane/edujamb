@@ -54,6 +54,12 @@ export default function AdminPage() {
           return;
         }
 
+        if (adminData.role !== "super_admin") {
+          await signOut(auth);
+          router.replace("/staff/login?error=portal");
+          return;
+        }
+
         setAdmin(adminData);
         setChecking(false);
       } catch (error) {
@@ -118,7 +124,7 @@ export default function AdminPage() {
             </p>
 
             <h1 className="mt-1 text-2xl font-black tracking-tight text-gray-950">
-              JAMBMASTER
+              EduJAMB
             </h1>
           </button>
 
@@ -197,6 +203,15 @@ export default function AdminPage() {
             href="/admin/media"
             icon="▣"
           />
+
+          {admin?.role === "super_admin" && (
+            <AdminCard
+              title="Team Management"
+              description="Create and disable delegated co-admin, supporter and teacher accounts without sharing the Super Admin account."
+              href="/admin/team"
+              icon="♙"
+            />
+          )}
 
           <AdminCard
             title="Authentication"

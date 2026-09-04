@@ -53,6 +53,11 @@ export default function AdminLoginPage() {
         throw new Error("This administrator account is inactive.");
       }
 
+      if (adminData.role !== "super_admin") {
+        await signOut(auth);
+        throw new Error("This account must use the Staff Portal.");
+      }
+
       router.push("/admin");
     } catch (err: unknown) {
       console.error(err);
@@ -78,7 +83,7 @@ export default function AdminLoginPage() {
             </div>
 
             <h1 className="text-3xl font-black tracking-tight text-gray-950">
-              JAMBMASTER
+              EduJAMB
             </h1>
 
             <p className="mt-2 text-sm text-gray-500">
