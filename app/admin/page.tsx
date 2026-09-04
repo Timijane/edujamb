@@ -54,12 +54,6 @@ export default function AdminPage() {
           return;
         }
 
-        if (adminData.role !== "super_admin") {
-          await signOut(auth);
-          router.replace("/staff/login?error=portal");
-          return;
-        }
-
         setAdmin(adminData);
         setChecking(false);
       } catch (error) {
