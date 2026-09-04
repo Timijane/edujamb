@@ -415,13 +415,6 @@ export default function Home() {
           <div className="flex items-center gap-2 sm:gap-3">
             <a
               href="/login"
-              className="hidden rounded-xl px-4 py-2.5 text-sm font-bold text-[#493b59] transition hover:bg-white sm:block"
-            >
-              {homepage.global.navLogin}
-            </a>
-
-            <a
-              href="/signup"
               className="rounded-xl bg-[#6d28d9] px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-purple-900/15 transition hover:-translate-y-0.5 hover:bg-[#5b21b6] sm:px-5"
             >
               {homepage.global.navStartFree}
@@ -1331,7 +1324,7 @@ export default function Home() {
               {homepage.global.navLogin}
             </a>
 
-            <a href="/signup" className="footer-link">
+            <a href="/login" className="footer-link">
               {homepage.global.navStartFree}
             </a>
           </div>

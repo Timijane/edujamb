@@ -1,4 +1,4 @@
-import { adminAuth } from "@/lib/firebase-admin";
+import { getAdminAuth } from "@/lib/firebase-admin";
 import type { DecodedIdToken } from "firebase-admin/auth";
 
 export async function verifyBearerToken(
@@ -16,7 +16,7 @@ export async function verifyBearerToken(
     throw new Error("Missing authentication token.");
   }
 
-  return adminAuth.verifyIdToken(token);
+  return getAdminAuth().verifyIdToken(token);
 }
 
 export function isAllowedRole(

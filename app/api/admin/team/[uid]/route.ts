@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { verifyBearerToken } from "@/lib/auth-server";
 
 export const runtime = "nodejs";
@@ -10,7 +10,7 @@ export async function PATCH(
 ) {
   try {
     const caller = await verifyBearerToken(request);
-    const callerDoc = await adminDb.collection("adminUsers").doc(caller.uid).get();
+    const callerDoc = await getAdminDb().collection("adminUsers").doc(caller.uid).get();
 
     if (!callerDoc.exists || callerDoc.data()?.active !== true || callerDoc.data()?.role !== "super_admin") {
       return NextResponse.json({ success: false, message: "Forbidden." }, { status: 403 });
@@ -28,8 +28,8 @@ export async function PATCH(
     const body = await request.json();
     const active = body.active === true;
 
-    const adminRef = adminDb.collection("adminUsers").doc(uid);
-    const teacherRef = adminDb.collection("teacherUsers").doc(uid);
+    const adminRef = getAdminDb().collection("adminUsers").doc(uid);
+    const teacherRef = getAdminDb().collection("teacherUsers").doc(uid);
 
     const [adminSnap, teacherSnap] = await Promise.all([
       adminRef.get(),
@@ -40,7 +40,7 @@ export async function PATCH(
       return NextResponse.json({ success: false, message: "Team member not found." }, { status: 404 });
     }
 
-    await adminAuth.updateUser(uid, { disabled: !active });
+    await getAdminAuth().updateUser(uid, { disabled: !active });
 
     if (adminSnap.exists) {
       await adminRef.update({ active, updatedAt: new Date() });

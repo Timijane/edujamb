@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const { getAdminDb } = await import("@/lib/firebase-admin");
   try {
-    await adminDb.collection("system").doc("adminTest").set(
+    await getAdminDb().collection("system").doc("adminTest").set(
       {
         status: "Firebase Admin SDK connected",
         updatedAt: new Date(),

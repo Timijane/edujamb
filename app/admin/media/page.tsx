@@ -226,6 +226,17 @@ export default function MediaManagerPage() {
         },
 
         {
+          id: "login_background",
+          label: "Login Background",
+          description: "Artistic image used as the shared EduJAMB login background.",
+          type: "site",
+          purpose: "login_background",
+          image: site.loginBackgroundImage || "",
+          mediaId: site.loginBackgroundImageMediaId || "",
+          assigned: Boolean(site.loginBackgroundImageMediaId),
+        },
+
+        {
           id: "hero_1",
           label: "Hero Image 1",
           description:

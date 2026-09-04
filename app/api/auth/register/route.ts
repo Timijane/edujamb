@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 
 export const runtime = "nodejs";
 
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     let user;
     try {
-      user = await adminAuth.createUser({
+      user = await getAdminAuth().createUser({
         email,
         password,
         displayName: `${firstName} ${lastName}`.trim(),
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       throw error;
     }
 
-    await adminDb.collection("users").doc(user.uid).set({
+    await getAdminDb().collection("users").doc(user.uid).set({
       accountType: "student",
       email,
       emailVerified: false,
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       updatedAt: new Date(),
     });
 
-    await adminDb.collection("students").doc(user.uid).set({
+    await getAdminDb().collection("students").doc(user.uid).set({
       firstName,
       lastName,
       username: "",

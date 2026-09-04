@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase-admin";
 import { verifyBearerToken } from "@/lib/auth-server";
 
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ function clean(value: unknown) {
 export async function POST(request: Request) {
   try {
     const caller = await verifyBearerToken(request);
-    const callerDoc = await adminDb.collection("adminUsers").doc(caller.uid).get();
+    const callerDoc = await getAdminDb().collection("adminUsers").doc(caller.uid).get();
 
     if (!callerDoc.exists || callerDoc.data()?.active !== true || callerDoc.data()?.role !== "super_admin") {
       return NextResponse.json(
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
     let user;
     try {
-      user = await adminAuth.createUser({
+      user = await getAdminAuth().createUser({
         email,
         password,
         displayName,
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     }
 
     if (role === "teacher") {
-      await adminDb.collection("teacherUsers").doc(user.uid).set({
+      await getAdminDb().collection("teacherUsers").doc(user.uid).set({
         email,
         displayName,
         role,
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
         updatedAt: new Date(),
       });
     } else {
-      await adminDb.collection("adminUsers").doc(user.uid).set({
+      await getAdminDb().collection("adminUsers").doc(user.uid).set({
         email,
         displayName,
         role,
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       });
     }
 
-    await adminDb.collection("users").doc(user.uid).set({
+    await getAdminDb().collection("users").doc(user.uid).set({
       accountType: role === "teacher" ? "teacher" : "staff",
       email,
       role,
@@ -115,15 +115,15 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const caller = await verifyBearerToken(request);
-    const callerDoc = await adminDb.collection("adminUsers").doc(caller.uid).get();
+    const callerDoc = await getAdminDb().collection("adminUsers").doc(caller.uid).get();
 
     if (!callerDoc.exists || callerDoc.data()?.active !== true || callerDoc.data()?.role !== "super_admin") {
       return NextResponse.json({ success: false, message: "Forbidden." }, { status: 403 });
     }
 
     const [admins, teachers] = await Promise.all([
-      adminDb.collection("adminUsers").get(),
-      adminDb.collection("teacherUsers").get(),
+      getAdminDb().collection("adminUsers").get(),
+      getAdminDb().collection("teacherUsers").get(),
     ]);
 
     const members = [

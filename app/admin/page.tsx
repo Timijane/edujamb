@@ -54,6 +54,12 @@ export default function AdminPage() {
           return;
         }
 
+        if (adminData.role !== "super_admin") {
+          await signOut(auth);
+          router.replace("/staff/login?error=portal");
+          return;
+        }
+
         setAdmin(adminData);
         setChecking(false);
       } catch (error) {
@@ -192,6 +198,13 @@ export default function AdminPage() {
           />
 
           <AdminCard
+            title="Login Experience"
+            description="Control the shared login page background, colours, copy and visual experience."
+            href="/admin/login-settings"
+            icon="◌"
+          />
+
+          <AdminCard
             title="Media Manager"
             description="Upload and assign the logo, favicon, hero images and homepage section images."
             href="/admin/media"
@@ -209,7 +222,7 @@ export default function AdminPage() {
 
           <AdminCard
             title="Authentication"
-            description="Firebase Authentication is active for administrator access. Student authentication is the next platform module."
+            description="Firebase Authentication powers the shared login. The backend resolves each authenticated account to its authorized role."
             icon="✓"
           />
 

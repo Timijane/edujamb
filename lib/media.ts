@@ -28,6 +28,7 @@ export type MediaPurpose =
   | "analytics"
   | "community"
   | "mission"
+  | "login_background"
   | "other";
 
 export type MediaItem = {
@@ -118,6 +119,11 @@ export const MEDIA_PURPOSES: {
     description: "Homepage Mission section image.",
   },
   {
+    value: "login_background",
+    label: "Login Background",
+    description: "Artistic background image used on the shared login page.",
+  },
+  {
     value: "other",
     label: "Other",
     description: "General website media.",
@@ -170,6 +176,23 @@ export async function assignMediaToHomepage(
       {
         logo: media.url,
         logoMediaId: media.id,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return;
+  }
+
+  /**
+   * LOGIN BACKGROUND
+   */
+  if (media.purpose === "login_background") {
+    await setDoc(
+      doc(db, "siteSettings", "site"),
+      {
+        loginBackgroundImage: media.url,
+        loginBackgroundImageMediaId: media.id,
         updatedAt: serverTimestamp(),
       },
       { merge: true }
@@ -343,6 +366,23 @@ async function removeMediaAssignment(
         { merge: true }
       );
     }
+
+    return;
+  }
+
+  /**
+   * LOGIN BACKGROUND
+   */
+  if (media.purpose === "login_background") {
+    await setDoc(
+      doc(db, "siteSettings", "site"),
+      {
+        loginBackgroundImage: media.url,
+        loginBackgroundImageMediaId: media.id,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
 
     return;
   }

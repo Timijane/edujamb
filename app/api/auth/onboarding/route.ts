@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyBearerToken } from "@/lib/auth-server";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
@@ -70,11 +70,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const usernameRef = adminDb.collection("usernames").doc(usernameLower);
-    const studentRef = adminDb.collection("students").doc(uid);
-    const userRef = adminDb.collection("users").doc(uid);
+    const usernameRef = getAdminDb().collection("usernames").doc(usernameLower);
+    const studentRef = getAdminDb().collection("students").doc(uid);
+    const userRef = getAdminDb().collection("users").doc(uid);
 
-    await adminDb.runTransaction(async (transaction) => {
+    await getAdminDb().runTransaction(async (transaction) => {
       const [usernameSnap, studentSnap] = await Promise.all([
         transaction.get(usernameRef),
         transaction.get(studentRef),
