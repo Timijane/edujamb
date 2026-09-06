@@ -41,6 +41,36 @@ export type SiteSettings = {
   authLogoFrameBorder?: string;
   authLogoFrameBorderWidth?: number;
 
+  // --------------------------------------------------
+  // PROFILE EXPERIENCE
+  // --------------------------------------------------
+
+  profileHeaderVisible?: boolean;
+  profileMobileMenuEnabled?: boolean;
+  profileBrandNameVisible?: boolean;
+
+  profileHeroBackgroundType?: "gradient" | "image" | "mixed";
+  profileHeroBackgroundColor?: string;
+  profileHeroSecondaryColor?: string;
+  profileHeroAccentColor?: string;
+  profileHeroBackgroundImage?: string;
+  profileHeroBackgroundImageMediaId?: string;
+  profileHeroBackgroundPosition?: string;
+  profileHeroOverlayOpacity?: number;
+  profileHeroDecorations?: boolean;
+  profileHeroPattern?: boolean;
+  profileHeroTitle?: string;
+  profileHeroSubtitle?: string;
+
+  profilePageBackground?: string;
+  profilePrimaryColor?: string;
+  profilePrimaryHoverColor?: string;
+  profileCardOpacity?: number;
+  profileCardBlur?: number;
+  profileCardRadius?: number;
+  profileCardBorderColor?: string;
+  profileCardShadow?: string;
+
   // Login copy
   loginEyebrow?: string;
   loginTitle?: string;
@@ -88,6 +118,34 @@ export const defaultSiteSettings: SiteSettings = {
   authLogoFrameBackground: "#ffffff",
   authLogoFrameBorder: "#e2e8f0",
   authLogoFrameBorderWidth: 1,
+
+  // Profile Experience
+  profileHeaderVisible: true,
+  profileMobileMenuEnabled: true,
+  profileBrandNameVisible: true,
+
+  profileHeroBackgroundType: "mixed",
+  profileHeroBackgroundColor: "#6d28d9",
+  profileHeroSecondaryColor: "#312e81",
+  profileHeroAccentColor: "#c084fc",
+  profileHeroBackgroundImage: "",
+  profileHeroBackgroundImageMediaId: "",
+  profileHeroBackgroundPosition: "center",
+  profileHeroOverlayOpacity: 0.28,
+  profileHeroDecorations: true,
+  profileHeroPattern: true,
+  profileHeroTitle: "Build your EduJAMB profile",
+  profileHeroSubtitle:
+    "Set up your learning identity and unlock your personalized JAMB preparation experience.",
+
+  profilePageBackground: "#f7f5ff",
+  profilePrimaryColor: "#7c3aed",
+  profilePrimaryHoverColor: "#6d28d9",
+  profileCardOpacity: 0.96,
+  profileCardBlur: 14,
+  profileCardRadius: 28,
+  profileCardBorderColor: "rgba(255,255,255,0.75)",
+  profileCardShadow: "0 20px 60px rgba(76,29,149,0.10)",
 
   // Login
   loginEyebrow: "EDUJAMB • JAMB PREPARATION PLATFORM",
