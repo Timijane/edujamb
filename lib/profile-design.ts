@@ -161,3 +161,53 @@ export const defaultProfileDesign: ProfileDesignConfig = {
     backgroundImageMediaId: "",
   },
 };
+export function normalizeProfileDesign(
+  value?: Partial<ProfileDesignConfig> | null
+): ProfileDesignConfig {
+  return {
+    ...defaultProfileDesign,
+    ...value,
+
+    layout: {
+      ...defaultProfileDesign.layout,
+      ...(value?.layout ?? {}),
+    },
+
+    hero: {
+      ...defaultProfileDesign.hero,
+      ...(value?.hero ?? {}),
+    },
+
+    colors: {
+      ...defaultProfileDesign.colors,
+      ...(value?.colors ?? {}),
+    },
+
+    cards: {
+      ...defaultProfileDesign.cards,
+      ...(value?.cards ?? {}),
+    },
+
+    typography: {
+      ...defaultProfileDesign.typography,
+      ...(value?.typography ?? {}),
+    },
+
+    sections: {
+      ...defaultProfileDesign.sections,
+      ...(value?.sections ?? {}),
+    },
+
+    assets: {
+      ...defaultProfileDesign.assets,
+      ...(value?.assets ?? {}),
+    },
+  };
+}
+export type ProfileDesignSummary = {
+  designId: string;
+  name: string;
+  status: ProfileDesignConfig["status"];
+  updatedAt?: unknown;
+  publishedAt?: unknown;
+};
