@@ -4,9 +4,83 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { defaultSiteSettings, SiteSettings } from "@/lib/site-settings";
+import {
+  defaultSiteSettings,
+  SiteSettings,
+} from "@/lib/site-settings";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+function hexToRgba(hex: string, alpha: number) {
+  const value = hex.replace("#", "").trim();
+
+  if (value.length !== 6) {
+    return `rgba(255,255,255,${alpha})`;
+  }
+
+  const r = parseInt(value.slice(0, 2), 16);
+  const g = parseInt(value.slice(2, 4), 16);
+  const b = parseInt(value.slice(4, 6), 16);
+
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function positionClass(position?: SiteSettings["authCardPosition"]) {
+  switch (position) {
+    case "left":
+      return "justify-start";
+    case "right":
+      return "justify-end";
+    default:
+      return "justify-center";
+  }
+}
+
+function logoAlignment(position?: SiteSettings["authLogoPosition"]) {
+  switch (position) {
+    case "left":
+      return "justify-start";
+    case "right":
+      return "justify-end";
+    default:
+      return "justify-center";
+  }
+}
+
+function PasswordInput({
+  value,
+  onChange,
+  show,
+  onToggle,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  show: boolean;
+  onToggle: () => void;
+  placeholder: string;
+}) {
+  return (
+    <div className="relative">
+      <input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        autoComplete="new-password"
+        className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 pr-16 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+      />
+
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+      >
+        {show ? "Hide" : "Show"}
+      </button>
+    </div>
+  );
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,16 +90,22 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
+
+  const [settings, setSettings] =
+    useState<SiteSettings>(defaultSiteSettings);
 
   useEffect(() => {
     async function loadSettings() {
       try {
-        const snapshot = await getDoc(doc(db, "siteSettings", "site"));
+        const snapshot = await getDoc(
+          doc(db, "siteSettings", "site")
+        );
 
         if (snapshot.exists()) {
           setSettings({
@@ -34,7 +114,10 @@ export default function RegisterPage() {
           });
         }
       } catch (err) {
-        console.error("Failed to load registration settings:", err);
+        console.error(
+          "Failed to load registration settings:",
+          err
+        );
       }
     }
 
@@ -48,13 +131,14 @@ export default function RegisterPage() {
     if (type === "image" && image) {
       const opacity = Math.min(
         0.9,
-        Math.max(0, settings.loginOverlayOpacity ?? 0.25)
+        Math.max(0, settings.loginOverlayOpacity ?? 0.18)
       );
 
       return {
-        backgroundImage: `linear-gradient(rgba(8, 15, 30, ${opacity}), rgba(8, 15, 30, ${opacity})), url("${image}")`,
+        backgroundImage: `linear-gradient(rgba(8,15,30,${opacity}), rgba(8,15,30,${opacity})), url("${image}")`,
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition:
+          settings.loginBackgroundPosition || "center",
         backgroundRepeat: "no-repeat",
         backgroundAttachment: "fixed",
       };
@@ -62,7 +146,8 @@ export default function RegisterPage() {
 
     if (type === "color") {
       return {
-        backgroundColor: settings.loginBackgroundColor || "#f8fafc",
+        backgroundColor:
+          settings.loginBackgroundColor || "#f8fafc",
       };
     }
 
@@ -72,9 +157,38 @@ export default function RegisterPage() {
     };
   }, [settings]);
 
+  const frameStyle = useMemo<React.CSSProperties>(() => {
+    const opacity = Math.min(
+      1,
+      Math.max(0.35, settings.authCardOpacity ?? 0.95)
+    );
+
+    return {
+      width: `min(100%, ${settings.authCardWidth || "1180px"})`,
+      borderRadius: `${settings.authCardRadius ?? 32}px`,
+      backgroundColor: hexToRgba("#ffffff", opacity),
+      backdropFilter: `blur(${settings.authCardBlur ?? 20}px)`,
+      WebkitBackdropFilter: `blur(${settings.authCardBlur ?? 20}px)`,
+    };
+  }, [settings]);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError("");
+
+    const cleanFirstName = firstName.trim();
+    const cleanLastName = lastName.trim();
+    const cleanEmail = email.trim();
+
+    if (!cleanFirstName || !cleanLastName) {
+      setError("Please enter your first name and last name.");
+      return;
+    }
+
+    if (!cleanEmail) {
+      setError("Please enter your email address.");
+      return;
+    }
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
@@ -95,9 +209,9 @@ export default function RegisterPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          email: email.trim(),
+          firstName: cleanFirstName,
+          lastName: cleanLastName,
+          email: cleanEmail,
           password,
         }),
       });
@@ -112,350 +226,345 @@ export default function RegisterPage() {
 
       await signInWithEmailAndPassword(
         auth,
-        email.trim(),
+        cleanEmail,
         password
       );
 
       router.replace("/onboarding");
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to create your account."
-      );
+      console.error(err);
+
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(
+          "Unable to create your account. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
   }
 
+  const logoVisible = settings.authLogoVisible !== false;
+
   return (
     <main
-      className="relative min-h-screen overflow-hidden px-4 py-5 sm:px-6 sm:py-8"
+      className={`relative flex min-h-screen ${positionClass(
+        settings.authCardPosition
+      )} items-center overflow-hidden px-4 py-8 sm:px-6 lg:px-10`}
       style={backgroundStyle}
     >
       <div className="absolute inset-0 bg-black/10" />
 
-      <div className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-indigo-500/25 blur-3xl" />
+      <section
+        className="relative z-10 w-full overflow-hidden border border-white/30 shadow-2xl"
+        style={frameStyle}
+      >
+        <div className="grid min-h-[680px] lg:grid-cols-[0.9fr_1.1fr]">
 
-      <div className="relative mx-auto flex min-h-[calc(100vh-2.5rem)] max-w-6xl items-center justify-center sm:min-h-[calc(100vh-4rem)]">
-        <div className="grid w-full overflow-hidden rounded-[32px] border border-white/20 bg-white/10 shadow-[0_35px_120px_rgba(0,0,0,0.3)] backdrop-blur-xl lg:grid-cols-[0.95fr_1.05fr]">
-
-          {/* BRAND / HERO */}
-          <section className="relative hidden min-h-[760px] overflow-hidden p-10 lg:flex lg:flex-col lg:justify-between xl:p-14">
-            <div className="absolute inset-0 bg-slate-950/55" />
-
-            <div className="relative z-10">
-              <div className="flex items-center gap-4">
-                {settings.logo ? (
-                  <img
-                    src={settings.logo}
-                    alt="EduJAMB"
-                    className="h-12 w-auto max-w-[200px] object-contain"
-                  />
-                ) : (
-                  <>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sm font-black text-slate-950 shadow-xl">
-                      EJ
+          {/* BRAND PANEL */}
+          <div className="hidden flex-col justify-between bg-slate-950/90 p-10 text-white lg:flex xl:p-14">
+            <div>
+              {logoVisible && (
+                <div
+                  className={`mb-12 flex ${logoAlignment(
+                    settings.authLogoPosition
+                  )}`}
+                >
+                  {settings.logo ? (
+                    <img
+                      src={settings.logo}
+                      alt="EduJAMB"
+                      className="h-auto max-w-full object-contain"
+                      style={{
+                        width: `${settings.authLogoSize ?? 200}px`,
+                      }}
+                    />
+                  ) : (
+                    <div className="text-2xl font-black tracking-tight">
+                      Edu<span className="text-cyan-400">
+                        JAMB
+                      </span>
                     </div>
-                    <span className="text-xl font-black tracking-tight text-white">
-                      EduJAMB
-                    </span>
-                  </>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
-              <div className="mt-28 max-w-xl">
-                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-white/80 backdrop-blur">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Built for serious JAMB preparation
+              <div className="max-w-md">
+                <div className="mb-5 inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">
+                  {settings.registerEyebrow ||
+                    "GET STARTED"}
                 </div>
 
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
-                  START YOUR JOURNEY
-                </p>
-
-                <h1 className="mt-5 text-5xl font-black leading-[1.02] tracking-[-0.045em] text-white xl:text-6xl">
-                  Your preparation.
-                  <span className="block text-cyan-300">
-                    Your progress. Your future.
-                  </span>
+                <h1 className="text-4xl font-black leading-tight tracking-tight xl:text-5xl">
+                  {settings.registerTitle ||
+                    "Create your account"}
                 </h1>
 
-                <p className="mt-7 max-w-lg text-base leading-7 text-white/70">
-                  Create your EduJAMB account and build a smarter,
-                  more structured approach to your JAMB preparation.
+                <p className="mt-5 text-base leading-7 text-slate-300">
+                  {settings.registerSubtitle ||
+                    "Join EduJAMB and start building a better JAMB preparation routine."}
                 </p>
               </div>
             </div>
 
-            <div className="relative z-10">
-              <div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-                <p className="text-sm font-black text-white">
-                  Everything starts with preparation.
-                </p>
+            <div>
+              <div className="mb-4 h-px w-full bg-white/10" />
 
-                <p className="mt-2 text-xs leading-5 text-white/55">
-                  Practice questions, monitor your progress and keep
-                  your preparation organized in one place.
-                </p>
-              </div>
-
-              <p className="mt-7 text-xs font-medium text-white/50">
-                Secure account creation • EduJAMB
+              <p className="text-sm leading-6 text-slate-400">
+                Prepare smarter. Practice consistently.
+                Build confidence for your JAMB examination.
               </p>
             </div>
-          </section>
+          </div>
 
-          {/* REGISTER FORM */}
-          <section className="flex min-h-[760px] items-center bg-white/95 p-6 sm:p-10 lg:p-14">
-            <div className="mx-auto w-full max-w-md">
+          {/* FORM PANEL */}
+          <div className="flex items-center bg-white/95 px-5 py-8 sm:px-8 lg:px-12 xl:px-16">
+            <div className="mx-auto w-full max-w-xl">
 
+              {/* MOBILE BRANDING */}
               <div className="mb-8 lg:hidden">
-                {settings.logo ? (
-                  <img
-                    src={settings.logo}
-                    alt="EduJAMB"
-                    className="h-11 w-auto max-w-[190px] object-contain"
-                  />
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-950 text-xs font-black text-white">
-                      EJ
-                    </div>
-                    <span className="text-xl font-black text-slate-950">
-                      EduJAMB
-                    </span>
+                {logoVisible && (
+                  <div
+                    className={`mb-7 flex ${logoAlignment(
+                      settings.authLogoPosition
+                    )}`}
+                  >
+                    {settings.logo ? (
+                      <img
+                        src={settings.logo}
+                        alt="EduJAMB"
+                        className="h-auto max-w-full object-contain"
+                        style={{
+                          width: `${settings.authLogoMobileSize ?? 190}px`,
+                        }}
+                      />
+                    ) : (
+                      <div className="text-2xl font-black tracking-tight text-slate-950">
+                        Edu<span className="text-indigo-600">
+                          JAMB
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
+
+                <div className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
+                  {settings.registerEyebrow ||
+                    "GET STARTED"}
+                </div>
+
+                <h1 className="text-3xl font-black tracking-tight text-slate-950">
+                  {settings.registerTitle ||
+                    "Create your account"}
+                </h1>
+
+                <p className="mt-3 text-sm leading-6 text-slate-500">
+                  {settings.registerSubtitle ||
+                    "Join EduJAMB and start building a better JAMB preparation routine."}
+                </p>
               </div>
 
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">
-                  GET STARTED
-                </p>
-
-                <h2 className="mt-3 text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
+              {/* DESKTOP FORM HEADER */}
+              <div className="mb-8 hidden lg:block">
+                <h2 className="text-2xl font-black tracking-tight text-slate-950">
                   Create your account
                 </h2>
 
-                <p className="mt-3 text-sm leading-6 text-slate-500">
-                  Join EduJAMB and start building a better JAMB
-                  preparation routine.
+                <p className="mt-2 text-sm text-slate-500">
+                  Enter your details to get started.
                 </p>
               </div>
 
-              <form onSubmit={submit} className="mt-8 space-y-5">
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <Input
-                    label="First name"
-                    value={firstName}
-                    onChange={setFirstName}
-                    autoComplete="given-name"
-                  />
+              {error && (
+                <div
+                  role="alert"
+                  className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium leading-6 text-red-700"
+                >
+                  {error}
+                </div>
+              )}
 
-                  <Input
-                    label="Last name"
-                    value={lastName}
-                    onChange={setLastName}
-                    autoComplete="family-name"
+              <form onSubmit={submit} className="space-y-5">
+
+                {/* NAMES */}
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="firstName"
+                      className="mb-2 block text-sm font-semibold text-slate-700"
+                    >
+                      First name
+                    </label>
+
+                    <input
+                      id="firstName"
+                      type="text"
+                      value={firstName}
+                      onChange={(event) =>
+                        setFirstName(event.target.value)
+                      }
+                      placeholder="First name"
+                      autoComplete="given-name"
+                      required
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="lastName"
+                      className="mb-2 block text-sm font-semibold text-slate-700"
+                    >
+                      Last name
+                    </label>
+
+                    <input
+                      id="lastName"
+                      type="text"
+                      value={lastName}
+                      onChange={(event) =>
+                        setLastName(event.target.value)
+                      }
+                      placeholder="Last name"
+                      autoComplete="family-name"
+                      required
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                    />
+                  </div>
+                </div>
+
+                {/* EMAIL */}
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-2 block text-sm font-semibold text-slate-700"
+                  >
+                    Email address
+                  </label>
+
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(event) =>
+                      setEmail(event.target.value)
+                    }
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   />
                 </div>
 
-                <Input
-                  label="Email address"
-                  type="email"
-                  value={email}
-                  onChange={setEmail}
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                />
-
-                <PasswordInput
-                  label="Password"
-                  value={password}
-                  show={showPassword}
-                  onChange={setPassword}
-                  onToggle={() =>
-                    setShowPassword((value) => !value)
-                  }
-                  autoComplete="new-password"
-                  placeholder="At least 8 characters"
-                />
-
-                <PasswordInput
-                  label="Confirm password"
-                  value={confirm}
-                  show={showConfirm}
-                  onChange={setConfirm}
-                  onToggle={() =>
-                    setShowConfirm((value) => !value)
-                  }
-                  autoComplete="new-password"
-                  placeholder="Enter your password again"
-                />
-
-                {password.length > 0 && (
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-500">
-                        Password strength
-                      </span>
-
-                      <span
-                        className={`text-xs font-black ${
-                          password.length >= 8
-                            ? "text-emerald-600"
-                            : "text-orange-600"
-                        }`}
-                      >
-                        {password.length >= 8
-                          ? "Good"
-                          : "Too short"}
-                      </span>
-                    </div>
-
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          password.length >= 8
-                            ? "w-full bg-emerald-500"
-                            : "w-1/2 bg-orange-400"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {error && (
-                  <div
-                    role="alert"
-                    className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium leading-5 text-red-700"
+                {/* PASSWORD */}
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="mb-2 block text-sm font-semibold text-slate-700"
                   >
-                    {error}
-                  </div>
-                )}
+                    Password
+                  </label>
 
+                  <PasswordInput
+                    value={password}
+                    onChange={setPassword}
+                    show={showPassword}
+                    onToggle={() =>
+                      setShowPassword((value) => !value)
+                    }
+                    placeholder="Create a password"
+                  />
+
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                    <span
+                      className={
+                        password.length >= 8
+                          ? "font-semibold text-emerald-600"
+                          : "text-slate-400"
+                      }
+                    >
+                      • 8+ characters
+                    </span>
+
+                    <span
+                      className={
+                        /[A-Z]/.test(password)
+                          ? "font-semibold text-emerald-600"
+                          : "text-slate-400"
+                      }
+                    >
+                      • Uppercase
+                    </span>
+
+                    <span
+                      className={
+                        /[0-9]/.test(password)
+                          ? "font-semibold text-emerald-600"
+                          : "text-slate-400"
+                      }
+                    >
+                      • Number
+                    </span>
+                  </div>
+                </div>
+
+                {/* CONFIRM PASSWORD */}
+                <div>
+                  <label
+                    htmlFor="confirm"
+                    className="mb-2 block text-sm font-semibold text-slate-700"
+                  >
+                    Confirm password
+                  </label>
+
+                  <PasswordInput
+                    value={confirm}
+                    onChange={setConfirm}
+                    show={showConfirm}
+                    onToggle={() =>
+                      setShowConfirm((value) => !value)
+                    }
+                    placeholder="Confirm your password"
+                  />
+                </div>
+
+                {/* SUBMIT */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="group relative w-full overflow-hidden rounded-2xl bg-slate-950 px-5 py-4 text-sm font-black text-white shadow-xl shadow-slate-900/20 transition hover:-translate-y-0.5 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-12 w-full rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <span className="relative z-10">
-                    {loading
-                      ? "Creating your account..."
-                      : "Create Student Account"}
-                  </span>
-
-                  {!loading && (
-                    <span className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-cyan-400/40 to-transparent transition-all group-hover:w-40" />
-                  )}
+                  {loading
+                    ? "Creating account..."
+                    : "Create account"}
                 </button>
               </form>
 
-              <div className="my-7 flex items-center gap-3">
-                <div className="h-px flex-1 bg-slate-200" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Already registered?
+              {/* LOGIN NAVIGATION */}
+              <div className="mt-7 flex items-center justify-center gap-2 text-sm">
+                <span className="text-slate-500">
+                  Already have an account?
                 </span>
-                <div className="h-px flex-1 bg-slate-200" />
+
+                <Link
+                  href="/login"
+                  className="font-bold text-indigo-600 transition hover:text-indigo-800"
+                >
+                  Back to Login
+                </Link>
               </div>
 
-              <Link
-                href="/login"
-                className="flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-black text-slate-800 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-              >
-                Sign in to your account
-              </Link>
-
-              <p className="mt-7 text-center text-xs leading-5 text-slate-400">
-                By creating an account, you are starting your
-                personalized EduJAMB preparation journey.
+              <p className="mt-8 text-center text-xs leading-5 text-slate-400">
+                By creating an account, you agree to use
+                EduJAMB responsibly and provide accurate
+                information.
               </p>
             </div>
-          </section>
+          </div>
         </div>
-      </div>
+      </section>
     </main>
-  );
-}
-
-function Input({
-  label,
-  type = "text",
-  value,
-  onChange,
-  autoComplete,
-  placeholder,
-}: {
-  label: string;
-  type?: string;
-  value: string;
-  onChange: (value: string) => void;
-  autoComplete?: string;
-  placeholder?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-bold text-slate-800">
-        {label}
-      </span>
-
-      <input
-        required
-        type={type}
-        autoComplete={autoComplete}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
-      />
-    </label>
-  );
-}
-
-function PasswordInput({
-  label,
-  value,
-  show,
-  onChange,
-  onToggle,
-  autoComplete,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  show: boolean;
-  onChange: (value: string) => void;
-  onToggle: () => void;
-  autoComplete?: string;
-  placeholder?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-bold text-slate-800">
-        {label}
-      </span>
-
-      <div className="relative">
-        <input
-          required
-          type={show ? "text" : "password"}
-          autoComplete={autoComplete}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 pr-16 text-sm font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
-        />
-
-        <button
-          type="button"
-          onClick={onToggle}
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-xs font-black text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"
-        >
-          {show ? "Hide" : "Show"}
-        </button>
-      </div>
-    </label>
   );
 }
