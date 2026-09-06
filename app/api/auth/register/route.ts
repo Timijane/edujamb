@@ -21,19 +21,26 @@ export async function POST(request: Request) {
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
-        { success: false, message: "First name, last name, email and password are required." },
+        {
+          success: false,
+          message: "First name, last name, email and password are required.",
+        },
         { status: 400 }
       );
     }
 
     if (password.length < 8) {
       return NextResponse.json(
-        { success: false, message: "Password must be at least 8 characters." },
+        {
+          success: false,
+          message: "Password must be at least 8 characters.",
+        },
         { status: 400 }
       );
     }
 
     let user;
+
     try {
       user = await getAdminAuth().createUser({
         email,
@@ -52,7 +59,10 @@ export async function POST(request: Request) {
 
       if (code.includes("email-already-exists")) {
         return NextResponse.json(
-          { success: false, message: "An account with this email already exists." },
+          {
+            success: false,
+            message: "An account with this email already exists.",
+          },
           { status: 409 }
         );
       }
@@ -60,7 +70,9 @@ export async function POST(request: Request) {
       throw error;
     }
 
-    await getAdminDb().collection("users").doc(user.uid).set({
+    const db = getAdminDb();
+
+    await db.collection("users").doc(user.uid).set({
       accountType: "student",
       email,
       emailVerified: false,
@@ -71,23 +83,43 @@ export async function POST(request: Request) {
       updatedAt: new Date(),
     });
 
-    await getAdminDb().collection("students").doc(user.uid).set({
+    await db.collection("students").doc(user.uid).set({
       firstName,
       lastName,
+
+      // Public identity
       username: "",
       usernameLower: "",
+      showRealNamePublicly: false,
+
+      // Contact
       phone: "",
+
+      // Personal information
       dateOfBirth: "",
       gender: "",
+
+      // Date-of-birth privacy
+      showBirthDay: false,
+      showBirthMonth: false,
+      showBirthYear: false,
+
+      // Education
       state: "",
       school: "",
       educationLevel: "",
-      examYear: "",
+
+      // JAMB preparation
+      examYear: "2027",
       targetScore: "",
       preferredCourse: "",
       preferredInstitution: "",
       subjects: [],
+
+      // Profile completion
       profileComplete: false,
+      profileCompletionPercentage: 0,
+
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -99,8 +131,12 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Student registration error:", error);
+
     return NextResponse.json(
-      { success: false, message: "Unable to create the account." },
+      {
+        success: false,
+        message: "Unable to create the account.",
+      },
       { status: 500 }
     );
   }

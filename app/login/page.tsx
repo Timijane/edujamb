@@ -394,7 +394,7 @@ export default function LoginPage() {
           ) {
             router.replace("/dashboard");
           } else {
-            router.replace("/onboarding");
+            router.replace("/profile");
           }
           break;
       }

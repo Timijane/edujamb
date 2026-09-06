@@ -230,7 +230,7 @@ export default function RegisterPage() {
         password
       );
 
-      router.replace("/onboarding");
+      router.replace("/profile");
     } catch (err) {
       console.error(err);
 

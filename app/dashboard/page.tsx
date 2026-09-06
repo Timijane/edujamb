@@ -35,7 +35,7 @@ export default function DashboardPage() {
         }
 
         if (!data.user?.onboardingComplete) {
-          router.replace("/onboarding");
+          router.replace("/profile");
           return;
         }
 
