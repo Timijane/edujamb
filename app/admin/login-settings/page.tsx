@@ -372,7 +372,43 @@ export default function LoginSettingsPage() {
           </Panel>
 
           <Panel
-            title="4. Login Page Content"
+            title="4. Authentication Button"
+            description="Control the colours of the primary Login and Register buttons."
+          >
+            <div className="grid gap-5 md:grid-cols-3">
+              <ColorField
+                label="Button colour"
+                value={settings.authButtonColor || "#7c3aed"}
+                onChange={(value) =>
+                  update("authButtonColor", value)
+                }
+              />
+
+              <ColorField
+                label="Hover colour"
+                value={settings.authButtonHoverColor || "#6d28d9"}
+                onChange={(value) =>
+                  update("authButtonHoverColor", value)
+                }
+              />
+
+              <ColorField
+                label="Button text colour"
+                value={settings.authButtonTextColor || "#ffffff"}
+                onChange={(value) =>
+                  update("authButtonTextColor", value)
+                }
+              />
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-purple-100 bg-purple-50 p-4 text-sm leading-6 text-purple-950">
+              These colours apply to the primary action buttons on both
+              the Login and Register pages.
+            </div>
+          </Panel>
+
+          <Panel
+            title="5. Login Page Content"
             description="Edit the visible Login messaging."
           >
             <div className="grid gap-5 md:grid-cols-2">
@@ -543,6 +579,40 @@ function Panel({
 
       <div className="mt-6">{children}</div>
     </section>
+  );
+}
+
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-bold text-slate-800">
+        {label}
+      </label>
+
+      <div className="flex gap-3">
+        <input
+          type="color"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-12 w-16 cursor-pointer rounded-xl border border-slate-200 bg-white p-1"
+        />
+
+        <input
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="min-w-0 flex-1 rounded-xl border border-slate-200 px-4 py-3 font-mono text-sm uppercase outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-100"
+          placeholder="#7c3aed"
+        />
+      </div>
+    </div>
   );
 }
 

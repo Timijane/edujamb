@@ -751,7 +751,21 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-black shadow-lg transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                  style={{
+                    backgroundColor:
+                      settings.authButtonColor || "#7c3aed",
+                    color:
+                      settings.authButtonTextColor || "#ffffff",
+                  }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.backgroundColor =
+                      settings.authButtonHoverColor || "#6d28d9";
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.backgroundColor =
+                      settings.authButtonColor || "#7c3aed";
+                  }}
                 >
                   {loading && (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />

@@ -582,7 +582,21 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="h-12 w-full rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-12 w-full rounded-xl px-5 text-sm font-bold shadow-lg transition disabled:cursor-not-allowed disabled:opacity-60"
+                  style={{
+                    backgroundColor:
+                      settings.authButtonColor || "#7c3aed",
+                    color:
+                      settings.authButtonTextColor || "#ffffff",
+                  }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.backgroundColor =
+                      settings.authButtonHoverColor || "#6d28d9";
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.backgroundColor =
+                      settings.authButtonColor || "#7c3aed";
+                  }}
                 >
                   {loading
                     ? "Creating account..."

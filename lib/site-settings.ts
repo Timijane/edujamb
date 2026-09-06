@@ -25,6 +25,11 @@ export type SiteSettings = {
   authCardRadius?: number;
   authCardPosition?: "center" | "left" | "right";
 
+  // Authentication button
+  authButtonColor?: string;
+  authButtonHoverColor?: string;
+  authButtonTextColor?: string;
+
   // Authentication branding
   authLogoVisible?: boolean;
   authLogoSize?: number;
@@ -67,6 +72,11 @@ export const defaultSiteSettings: SiteSettings = {
   authCardBlur: 20,
   authCardRadius: 32,
   authCardPosition: "center",
+
+  // Authentication button
+  authButtonColor: "#7c3aed",
+  authButtonHoverColor: "#6d28d9",
+  authButtonTextColor: "#ffffff",
 
   // Authentication branding
   authLogoVisible: true,
