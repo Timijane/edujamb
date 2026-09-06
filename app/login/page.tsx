@@ -1,6 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
@@ -12,7 +17,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 function hexToRgba(hex: string, opacity: number) {
-  const clean = hex.replace("#", "");
+  const clean = hex.replace("#", "").trim();
 
   if (clean.length !== 6) {
     return `rgba(255,255,255,${opacity})`;
@@ -25,16 +30,141 @@ function hexToRgba(hex: string, opacity: number) {
   return `rgba(${r},${g},${b},${opacity})`;
 }
 
-function positionClass(position: SiteSettings["authCardPosition"]) {
+function positionClass(
+  position?: SiteSettings["authCardPosition"]
+) {
   if (position === "left") return "justify-start";
   if (position === "right") return "justify-end";
   return "justify-center";
 }
 
-function logoAlignment(position: SiteSettings["authLogoPosition"]) {
+function logoAlignment(
+  position?: SiteSettings["authLogoPosition"]
+) {
   if (position === "left") return "justify-start";
   if (position === "right") return "justify-end";
   return "justify-center";
+}
+
+function EyeIcon({ open }: { open: boolean }) {
+  if (open) {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        className="h-5 w-5"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2.7 12s3.4-6 9.3-6 9.3 6 9.3 6-3.4 6-9.3 6-9.3-6-9.3-6Z"
+        />
+        <circle cx="12" cy="12" r="2.7" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 3l18 18"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M10.6 6.2A10.5 10.5 0 0 1 12 6c5.9 0 9.3 6 9.3 6a16.8 16.8 0 0 1-3 3.5M6.2 6.8C3.9 8.3 2.7 12 2.7 12s3.4 6 9.3 6c1.1 0 2.1-.2 3-.5"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9.9 9.9a3 3 0 0 0 4.2 4.2"
+      />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <rect
+        x="3"
+        y="5"
+        width="18"
+        height="14"
+        rx="2.5"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m4 7 8 6 8-6"
+      />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <rect
+        x="4"
+        y="10"
+        width="16"
+        height="10"
+        rx="2.5"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8 10V7a4 4 0 0 1 8 0v3"
+      />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="8" r="3.5" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M5 20c.8-3.3 3.1-5 7-5s6.2 1.7 7 5"
+      />
+    </svg>
+  );
 }
 
 export default function LoginPage() {
@@ -42,7 +172,11 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
+  const [rememberMe, setRememberMe] =
+    useState(false);
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -73,64 +207,126 @@ export default function LoginPage() {
     loadSettings();
   }, []);
 
-  const backgroundStyle = useMemo<React.CSSProperties>(() => {
-    const type = settings.loginBackgroundType || "gradient";
-    const image = settings.loginBackgroundImage?.trim();
+  const backgroundStyle =
+    useMemo<React.CSSProperties>(() => {
+      const type =
+        settings.loginBackgroundType || "gradient";
+      const image =
+        settings.loginBackgroundImage?.trim();
 
-    if (type === "image" && image) {
+      if (type === "image" && image) {
+        const opacity = Math.min(
+          0.9,
+          Math.max(
+            0,
+            settings.loginOverlayOpacity ?? 0.18
+          )
+        );
+
+        return {
+          backgroundImage:
+            `linear-gradient(` +
+            `rgba(8,15,30,${opacity}),` +
+            `rgba(8,15,30,${opacity})` +
+            `), url("${image}")`,
+          backgroundSize: "cover",
+          backgroundPosition:
+            settings.loginBackgroundPosition ||
+            "center",
+          backgroundRepeat: "no-repeat",
+        };
+      }
+
+      if (type === "color") {
+        return {
+          backgroundColor:
+            settings.loginBackgroundColor ||
+            "#f8fafc",
+        };
+      }
+
+      return {
+        background:
+          "radial-gradient(circle at 15% 20%, rgba(168,85,247,0.32), transparent 32%), radial-gradient(circle at 85% 75%, rgba(126,34,206,0.28), transparent 34%), linear-gradient(135deg, #05030a 0%, #100817 42%, #160b24 68%, #030207 100%)",
+      };
+    }, [settings]);
+
+  const frameStyle =
+    useMemo<React.CSSProperties>(() => {
       const opacity = Math.min(
-        0.9,
+        1,
         Math.max(
-          0,
-          settings.loginOverlayOpacity ?? 0.18
+          0.35,
+          settings.authCardOpacity ?? 0.95
         )
       );
 
       return {
-        backgroundImage:
-          `linear-gradient(` +
-          `rgba(8,15,30,${opacity}),` +
-          `rgba(8,15,30,${opacity})` +
-          `), url("${image}")`,
-        backgroundSize: "cover",
-        backgroundPosition:
-          settings.loginBackgroundPosition || "center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
+        width: "100%",
+        maxWidth:
+          settings.authCardWidth || "920px",
+        borderRadius: `${Math.min(
+          32,
+          Math.max(
+            16,
+            settings.authCardRadius ?? 24
+          )
+        )}px`,
+        backgroundColor: hexToRgba(
+          "#ffffff",
+          opacity
+        ),
+        backdropFilter: `blur(${
+          settings.authCardBlur ?? 20
+        }px)`,
+        WebkitBackdropFilter: `blur(${
+          settings.authCardBlur ?? 20
+        }px)`,
       };
-    }
+    }, [settings]);
 
-    if (type === "color") {
+  const logoVisible =
+    settings.authLogoVisible !== false;
+
+  const logoFrameVisible =
+    settings.authLogoFrame !== false;
+
+  const logoFrameSize =
+    settings.authLogoFrameSize ?? 112;
+
+  const logoFrameStyle =
+    useMemo<React.CSSProperties>(() => {
+      const size = Math.min(
+        180,
+        Math.max(72, logoFrameSize)
+      );
+
       return {
+        width: `${size}px`,
+        height: `${size}px`,
         backgroundColor:
-          settings.loginBackgroundColor || "#f8fafc",
+          settings.authLogoFrameBackground ||
+          "#ffffff",
+        borderColor:
+          settings.authLogoFrameBorder ||
+          "#e2e8f0",
+        borderWidth: `${Math.min(
+          8,
+          Math.max(
+            0,
+            settings.authLogoFrameBorderWidth ?? 1
+          )
+        )}px`,
       };
-    }
-
-    return {
-      background:
-        "linear-gradient(135deg, #07111f 0%, #172554 42%, #164e63 72%, #0f172a 100%)",
-    };
-  }, [settings]);
-
-  const frameStyle = useMemo<React.CSSProperties>(() => {
-    const opacity = Math.min(
-      1,
-      Math.max(0.35, settings.authCardOpacity ?? 0.95)
-    );
-
-    return {
-      width: `min(100%, ${settings.authCardWidth || "1180px"})`,
-      borderRadius: `${settings.authCardRadius ?? 32}px`,
-      backgroundColor: hexToRgba("#ffffff", opacity),
-      backdropFilter: `blur(${settings.authCardBlur ?? 20}px)`,
-      WebkitBackdropFilter: `blur(${settings.authCardBlur ?? 20}px)`,
-    };
-  }, [settings]);
+    }, [
+      logoFrameSize,
+      settings.authLogoFrameBackground,
+      settings.authLogoFrameBorder,
+      settings.authLogoFrameBorderWidth,
+    ]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-
     setError("");
 
     const cleanEmail = email.trim();
@@ -155,15 +351,21 @@ export default function LoginPage() {
       const token =
         await credential.user.getIdToken();
 
-      const response = await fetch("/api/auth/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        "/api/auth/me",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await response.json();
 
-      if (!response.ok || data.active === false) {
+      if (
+        !response.ok ||
+        data.active === false
+      ) {
         await auth.signOut();
 
         throw new Error(
@@ -187,7 +389,9 @@ export default function LoginPage() {
 
         case "student":
         default:
-          if (data.user?.onboardingComplete) {
+          if (
+            data.user?.onboardingComplete
+          ) {
             router.replace("/dashboard");
           } else {
             router.replace("/onboarding");
@@ -222,280 +426,365 @@ export default function LoginPage() {
 
   return (
     <main
-      className={`relative min-h-screen overflow-hidden px-4 py-5 sm:px-6 sm:py-8 flex ${cardPosition}`}
+      className={`relative min-h-screen overflow-x-hidden px-4 py-5 sm:px-6 sm:py-8 flex ${cardPosition} items-start lg:items-center`}
       style={backgroundStyle}
     >
-      <div className="absolute inset-0 bg-black/10" />
+      <div className="pointer-events-none absolute inset-0 bg-black/10" />
 
-      <div className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute -left-32 top-10 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl" />
 
-      <div className="pointer-events-none absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-indigo-500/25 blur-3xl" />
-
-      <div
-        className="relative grid overflow-hidden border border-white/20 shadow-[0_35px_120px_rgba(0,0,0,0.3)] lg:grid-cols-[1.05fr_0.95fr]"
+      <section
+        className="relative z-10 overflow-hidden border border-white/30 shadow-[0_25px_90px_rgba(0,0,0,0.25)]"
         style={frameStyle}
       >
-        {/* BRAND / HERO */}
-        <section className="relative hidden min-h-[720px] overflow-hidden p-10 lg:flex lg:flex-col lg:justify-between xl:p-14">
-          <div className="absolute inset-0 bg-slate-950/55" />
+        <div className="grid lg:grid-cols-[0.78fr_1.22fr]">
+          {/* BRAND AREA */}
+          <aside className="relative hidden overflow-hidden bg-slate-950 lg:flex lg:flex-col lg:justify-between">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.18),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.18),transparent_45%)]" />
 
-          <div className="relative z-10">
-            {settings.authLogoVisible !== false && (
-              <div
-                className={`flex items-center ${logoPosition}`}
-              >
-                {settings.logo ? (
-                  <img
-                    src={settings.logo}
-                    alt="EduJAMB"
-                    style={{
-                      width: `${settings.authLogoSize ?? 200}px`,
-                      maxWidth: "100%",
-                      height: "auto",
-                    }}
-                    className="object-contain"
-                  />
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sm font-black text-slate-950 shadow-xl">
-                      EJ
+            <div className="relative z-10 p-8 xl:p-10">
+              {logoVisible && (
+                <div
+                  className={`flex ${logoPosition}`}
+                >
+                  {logoFrameVisible ? (
+                    <div
+                      className="flex shrink-0 items-center justify-center rounded-full border shadow-[0_12px_40px_rgba(0,0,0,0.25)]"
+                      style={logoFrameStyle}
+                    >
+                      {settings.logo ? (
+                        <img
+                          src={settings.logo}
+                          alt="EduJAMB"
+                          className="h-[72%] w-[72%] object-contain"
+                        />
+                      ) : (
+                        <div className="text-2xl font-black tracking-tight text-slate-950">
+                          EJ
+                        </div>
+                      )}
                     </div>
-
-                    <span className="text-xl font-black tracking-tight text-white">
-                      EduJAMB
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="mt-28 max-w-xl">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-white/80 backdrop-blur">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                Your JAMB preparation companion
-              </div>
-
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
-                {settings.loginEyebrow ||
-                  "EDUJAMB • JAMB PREPARATION PLATFORM"}
-              </p>
-
-              <h1 className="mt-5 text-5xl font-black leading-[1.02] tracking-[-0.045em] text-white xl:text-6xl">
-                Prepare with purpose.
-                <span className="block text-cyan-300">
-                  Perform with confidence.
-                </span>
-              </h1>
-
-              <p className="mt-7 max-w-lg text-base leading-7 text-white/70">
-                Your preparation, practice, progress and
-                academic community — connected in one
-                powerful experience.
-              </p>
-            </div>
-          </div>
-
-          <div className="relative z-10">
-            <div className="grid grid-cols-3 gap-3">
-              <Stat label="Practice" value="CBT" />
-              <Stat label="Progress" value="Track" />
-              <Stat label="Learning" value="Smart" />
-            </div>
-
-            <p className="mt-8 text-xs font-medium text-white/50">
-              Secure authentication • EduJAMB
-            </p>
-          </div>
-        </section>
-
-        {/* LOGIN FORM */}
-        <section className="flex min-h-[680px] items-center bg-white/95 p-6 sm:p-10 lg:p-14">
-          <div className="mx-auto w-full max-w-md">
-            {settings.authLogoVisible !== false && (
-              <div
-                className={`mb-8 flex lg:hidden ${logoPosition}`}
-              >
-                {settings.logo ? (
-                  <img
-                    src={settings.logo}
-                    alt="EduJAMB"
-                    style={{
-                      width: `${settings.authLogoMobileSize ?? 190}px`,
-                      maxWidth: "100%",
-                      height: "auto",
-                    }}
-                    className="object-contain"
-                  />
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-950 text-xs font-black text-white">
-                      EJ
+                  ) : settings.logo ? (
+                    <img
+                      src={settings.logo}
+                      alt="EduJAMB"
+                      className="max-w-[150px] object-contain"
+                    />
+                  ) : (
+                    <div className="text-2xl font-black text-white">
+                      Edu<span className="text-cyan-400">
+                        JAMB
+                      </span>
                     </div>
+                  )}
+                </div>
+              )}
 
-                    <span className="text-xl font-black text-slate-950">
-                      EduJAMB
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+              <div className="mt-12 max-w-sm">
+                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-cyan-300">
+                  {settings.loginEyebrow ||
+                    "EDUJAMB • JAMB PREPARATION PLATFORM"}
+                </p>
 
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">
-                {settings.loginEyebrow ||
-                  "WELCOME BACK"}
-              </p>
-
-              <h2 className="mt-3 text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
-                {settings.loginTitle ||
-                  "Welcome back"}
-              </h2>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                {settings.loginSubtitle ||
-                  "Continue your preparation journey with EduJAMB."}
-              </p>
-            </div>
-
-            <form
-              onSubmit={submit}
-              className="mt-8 space-y-5"
-            >
-              <label className="block">
-                <span className="mb-2 block text-sm font-bold text-slate-800">
-                  Email address
-                </span>
-
-                <input
-                  required
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(event) =>
-                    setEmail(event.target.value)
-                  }
-                  placeholder="you@example.com"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
-                />
-              </label>
-
-              <label className="block">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <span className="text-sm font-bold text-slate-800">
-                    Password
+                <h1 className="mt-4 text-4xl font-black leading-[1.04] tracking-[-0.04em] text-white xl:text-[44px]">
+                  Prepare with purpose.
+                  <span className="mt-1 block text-cyan-300">
+                    Perform with confidence.
                   </span>
+                </h1>
+
+                <p className="mt-5 text-sm leading-6 text-slate-300">
+                  {settings.loginSubtitle ||
+                    "Continue your preparation journey with EduJAMB."}
+                </p>
+              </div>
+            </div>
+
+            <div className="relative z-10 p-8 pt-0 xl:p-10 xl:pt-0">
+              <div className="grid grid-cols-3 gap-2.5">
+                {[
+                  ["CBT", "Practice"],
+                  ["Track", "Progress"],
+                  ["Smart", "Learning"],
+                ].map(([value, label]) => (
+                  <div
+                    key={label}
+                    className="rounded-xl border border-white/10 bg-white/[0.06] px-3 py-3"
+                  >
+                    <p className="text-sm font-black text-white">
+                      {value}
+                    </p>
+                    <p className="mt-0.5 text-[10px] font-medium text-slate-400">
+                      {label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-5 text-[10px] text-slate-500">
+                Secure authentication • EduJAMB
+              </p>
+            </div>
+          </aside>
+
+          {/* ACTION AREA */}
+          <div className="bg-white px-5 py-7 sm:px-8 sm:py-9 lg:px-10 lg:py-10">
+            <div className="mx-auto w-full max-w-[430px]">
+              {/* MOBILE LOGO */}
+              {logoVisible && (
+                <div
+                  className={`mb-6 flex lg:hidden ${logoPosition}`}
+                >
+                  {logoFrameVisible ? (
+                    <div
+                      className="flex shrink-0 items-center justify-center rounded-full border shadow-sm"
+                      style={{
+                        ...logoFrameStyle,
+                        width: `${Math.min(
+                          100,
+                          Math.max(
+                            72,
+                            logoFrameSize
+                          )
+                        )}px`,
+                        height: `${Math.min(
+                          100,
+                          Math.max(
+                            72,
+                            logoFrameSize
+                          )
+                        )}px`,
+                      }}
+                    >
+                      {settings.logo ? (
+                        <img
+                          src={settings.logo}
+                          alt="EduJAMB"
+                          className="h-[70%] w-[70%] object-contain"
+                        />
+                      ) : (
+                        <span className="text-xl font-black text-slate-950">
+                          EJ
+                        </span>
+                      )}
+                    </div>
+                  ) : settings.logo ? (
+                    <img
+                      src={settings.logo}
+                      alt="EduJAMB"
+                      className="max-w-[145px] object-contain"
+                    />
+                  ) : (
+                    <div className="text-2xl font-black text-slate-950">
+                      Edu<span className="text-indigo-600">
+                        JAMB
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* AUTH TABS */}
+              <div className="mb-7 flex items-center border-b border-slate-200">
+                <Link
+                  href="/login"
+                  className="relative px-1 pb-3 text-sm font-black text-slate-950"
+                >
+                  Log in
+                  <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-indigo-600" />
+                </Link>
+
+                <Link
+                  href="/register"
+                  className="ml-6 px-1 pb-3 text-sm font-semibold text-slate-400 transition hover:text-slate-700"
+                >
+                  Sign up
+                </Link>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-indigo-600">
+                  {settings.loginEyebrow ||
+                    "WELCOME BACK"}
+                </p>
+
+                <h2 className="mt-2.5 text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-[34px]">
+                  {settings.loginTitle ||
+                    "Welcome back"}
+                </h2>
+
+                <p className="mt-2.5 text-sm leading-6 text-slate-500">
+                  {settings.loginSubtitle ||
+                    "Continue your preparation journey with EduJAMB."}
+                </p>
+              </div>
+
+              <form
+                onSubmit={submit}
+                className="mt-7 space-y-5"
+              >
+                {/* EMAIL */}
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-2 block text-sm font-bold text-slate-700"
+                  >
+                    Email address
+                  </label>
+
+                  <div className="relative">
+                    <MailIcon />
+
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(event) =>
+                        setEmail(
+                          event.target.value
+                        )
+                      }
+                      placeholder="you@example.com"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                    />
+                  </div>
+                </div>
+
+                {/* PASSWORD */}
+                <div>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <label
+                      htmlFor="password"
+                      className="text-sm font-bold text-slate-700"
+                    >
+                      Password
+                    </label>
+
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs font-bold text-indigo-600 transition hover:text-indigo-800"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+
+                  <div className="relative">
+                    <LockIcon />
+
+                    <input
+                      id="password"
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
+                      required
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(event) =>
+                        setPassword(
+                          event.target.value
+                        )
+                      }
+                      placeholder="Enter your password"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-12 text-sm font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPassword(
+                          (value) => !value
+                        )
+                      }
+                      aria-label={
+                        showPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                      className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                    >
+                      <EyeIcon
+                        open={showPassword}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* OPTIONS */}
+                <div className="flex items-center justify-between gap-4">
+                  <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(event) =>
+                        setRememberMe(
+                          event.target.checked
+                        )
+                      }
+                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span>Remember me</span>
+                  </label>
 
                   <Link
                     href="/forgot-password"
-                    className="text-xs font-black text-indigo-600 transition hover:text-indigo-800"
+                    className="text-xs font-bold text-slate-500 hover:text-indigo-600 sm:hidden"
                   >
                     Forgot password?
                   </Link>
                 </div>
 
-                <div className="relative">
-                  <input
-                    required
-                    type={
-                      showPassword
-                        ? "text"
-                        : "password"
-                    }
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(event) =>
-                      setPassword(event.target.value)
-                    }
-                    placeholder="Enter your password"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 pr-16 text-sm font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowPassword(
-                        (value) => !value
-                      )
-                    }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-xs font-black text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"
+                {error && (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium leading-5 text-red-700"
                   >
-                    {showPassword
-                      ? "Hide"
-                      : "Show"}
-                  </button>
-                </div>
-              </label>
+                    {error}
+                  </div>
+                )}
 
-              {error && (
-                <div
-                  role="alert"
-                  className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium leading-5 text-red-700"
+                {/* CTA */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 text-sm font-black text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {error}
-                </div>
-              )}
+                  {loading && (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="group relative w-full overflow-hidden rounded-2xl bg-slate-950 px-5 py-4 text-sm font-black text-white shadow-xl shadow-slate-900/20 transition hover:-translate-y-0.5 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <span className="relative z-10">
                   {loading
                     ? "Signing you in..."
-                    : "Sign in to EduJAMB"}
+                    : "Log in"}
+                </button>
+              </form>
+
+              {/* SIGNUP */}
+              <div className="mt-7 text-center text-sm">
+                <span className="text-slate-500">
+                  Don't have an account?{" "}
                 </span>
 
-                {!loading && (
-                  <span className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-cyan-400/40 to-transparent transition-all group-hover:w-40" />
-                )}
-              </button>
-            </form>
+                <Link
+                  href="/register"
+                  className="font-black text-indigo-600 transition hover:text-indigo-800"
+                >
+                  Sign up
+                </Link>
+              </div>
 
-            <div className="my-7 flex items-center gap-3">
-              <div className="h-px flex-1 bg-slate-200" />
-
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                New here?
-              </span>
-
-              <div className="h-px flex-1 bg-slate-200" />
+              <p className="mt-5 text-center text-[11px] leading-5 text-slate-400">
+                One secure login for students, teachers
+                and authorized team members.
+              </p>
             </div>
-
-            <Link
-              href="/register"
-              className="flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-black text-slate-800 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-            >
-              Create a student account
-            </Link>
-
-            <p className="mt-7 text-center text-xs leading-5 text-slate-400">
-              One secure login for students, teachers and
-              authorized team members.
-            </p>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </main>
-  );
-}
-
-function Stat({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-white/45">
-        {label}
-      </p>
-
-      <p className="mt-1 text-sm font-black text-white">
-        {value}
-      </p>
-    </div>
   );
 }

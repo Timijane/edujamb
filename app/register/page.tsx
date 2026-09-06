@@ -248,6 +248,24 @@ export default function RegisterPage() {
 
   const logoVisible = settings.authLogoVisible !== false;
 
+  const logoFrameVisible = settings.authLogoFrame !== false;
+  const logoFrameSize = Math.max(
+    72,
+    Math.min(180, settings.authLogoFrameSize ?? 112)
+  );
+
+  const logoFrameStyle: React.CSSProperties = {
+    width: `${logoFrameSize}px`,
+    height: `${logoFrameSize}px`,
+    backgroundColor: settings.authLogoFrameBackground || "#ffffff",
+    border: `${Math.max(
+      0,
+      Math.min(6, settings.authLogoFrameBorderWidth ?? 1)
+    )}px solid ${
+      settings.authLogoFrameBorder || "#e2e8f0"
+    }`,
+  };
+
   return (
     <main
       className={`relative flex min-h-screen ${positionClass(
@@ -272,7 +290,24 @@ export default function RegisterPage() {
                     settings.authLogoPosition
                   )}`}
                 >
-                  {settings.logo ? (
+                  {logoFrameVisible ? (
+                    <div
+                      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full shadow-lg"
+                      style={logoFrameStyle}
+                    >
+                      {settings.logo ? (
+                        <img
+                          src={settings.logo}
+                          alt="EduJAMB"
+                          className="h-full w-full object-contain p-3"
+                        />
+                      ) : (
+                        <div className="text-xl font-black tracking-tight text-slate-950">
+                          Edu<span className="text-purple-600">JAMB</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : settings.logo ? (
                     <img
                       src={settings.logo}
                       alt="EduJAMB"
@@ -283,9 +318,7 @@ export default function RegisterPage() {
                     />
                   ) : (
                     <div className="text-2xl font-black tracking-tight">
-                      Edu<span className="text-cyan-400">
-                        JAMB
-                      </span>
+                      Edu<span className="text-purple-400">JAMB</span>
                     </div>
                   )}
                 </div>
@@ -331,7 +364,24 @@ export default function RegisterPage() {
                       settings.authLogoPosition
                     )}`}
                   >
-                    {settings.logo ? (
+                    {logoFrameVisible ? (
+                      <div
+                        className="flex shrink-0 items-center justify-center overflow-hidden rounded-full shadow-lg"
+                        style={logoFrameStyle}
+                      >
+                        {settings.logo ? (
+                          <img
+                            src={settings.logo}
+                            alt="EduJAMB"
+                            className="h-full w-full object-contain p-3"
+                          />
+                        ) : (
+                          <div className="text-xl font-black tracking-tight text-slate-950">
+                            Edu<span className="text-purple-600">JAMB</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : settings.logo ? (
                       <img
                         src={settings.logo}
                         alt="EduJAMB"
@@ -342,9 +392,7 @@ export default function RegisterPage() {
                       />
                     ) : (
                       <div className="text-2xl font-black tracking-tight text-slate-950">
-                        Edu<span className="text-indigo-600">
-                          JAMB
-                        </span>
+                        Edu<span className="text-purple-600">JAMB</span>
                       </div>
                     )}
                   </div>

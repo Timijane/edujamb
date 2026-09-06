@@ -30,6 +30,11 @@ export type SiteSettings = {
   authLogoSize?: number;
   authLogoMobileSize?: number;
   authLogoPosition?: "left" | "center" | "right";
+  authLogoFrame?: boolean;
+  authLogoFrameSize?: number;
+  authLogoFrameBackground?: string;
+  authLogoFrameBorder?: string;
+  authLogoFrameBorderWidth?: number;
 
   // Login copy
   loginEyebrow?: string;
@@ -57,7 +62,7 @@ export const defaultSiteSettings: SiteSettings = {
   loginBackgroundPosition: "center",
 
   // Authentication card
-  authCardWidth: "1180px",
+  authCardWidth: "920px",
   authCardOpacity: 0.95,
   authCardBlur: 20,
   authCardRadius: 32,
@@ -67,7 +72,12 @@ export const defaultSiteSettings: SiteSettings = {
   authLogoVisible: true,
   authLogoSize: 200,
   authLogoMobileSize: 190,
-  authLogoPosition: "left",
+  authLogoPosition: "center",
+  authLogoFrame: true,
+  authLogoFrameSize: 112,
+  authLogoFrameBackground: "#ffffff",
+  authLogoFrameBorder: "#e2e8f0",
+  authLogoFrameBorderWidth: 1,
 
   // Login
   loginEyebrow: "EDUJAMB • JAMB PREPARATION PLATFORM",
