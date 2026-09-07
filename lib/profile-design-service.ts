@@ -3,8 +3,11 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   serverTimestamp,
   setDoc,
+  where,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -35,7 +38,9 @@ export async function getProfileDesign(
   });
 }
 
-export async function listProfileDesigns(): Promise<ProfileDesignConfig[]> {
+export async function listProfileDesigns(): Promise<
+  ProfileDesignConfig[]
+> {
   const snapshot = await getDocs(
     collection(db, PROFILE_DESIGNS_COLLECTION)
   );
@@ -54,7 +59,11 @@ export async function saveProfileDesign(
   const normalized = normalizeProfileDesign(design);
 
   await setDoc(
-    doc(db, PROFILE_DESIGNS_COLLECTION, normalized.designId),
+    doc(
+      db,
+      PROFILE_DESIGNS_COLLECTION,
+      normalized.designId
+    ),
     {
       ...normalized,
       status: "draft",
@@ -79,16 +88,34 @@ export async function publishProfileDesign(
     throw new Error("Profile design not found.");
   }
 
-  await setDoc(
-    designRef,
-    {
-      status: "published",
-      publishedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true }
+  const allDesignsSnapshot = await getDocs(
+    collection(db, PROFILE_DESIGNS_COLLECTION)
   );
+
+  const batch = writeBatch(db);
+
+  allDesignsSnapshot.docs.forEach((item) => {
+    if (item.id !== designId) {
+      const data = item.data();
+
+      if (data.status === "published") {
+        batch.update(item.ref, {
+          status: "draft",
+          updatedAt: serverTimestamp(),
+        });
+      }
+    }
+  });
+
+  batch.update(designRef, {
+    status: "published",
+    publishedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  await batch.commit();
 }
+
 export async function ensureDefaultProfileDesign(): Promise<void> {
   const designRef = doc(
     db,
@@ -108,5 +135,25 @@ export async function ensureDefaultProfileDesign(): Promise<void> {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     publishedAt: serverTimestamp(),
+  });
+}
+
+export async function getPublishedProfileDesign(): Promise<ProfileDesignConfig> {
+  const publishedQuery = query(
+    collection(db, PROFILE_DESIGNS_COLLECTION),
+    where("status", "==", "published")
+  );
+
+  const snapshot = await getDocs(publishedQuery);
+
+  if (snapshot.empty) {
+    return defaultProfileDesign;
+  }
+
+  const published = snapshot.docs[0];
+
+  return normalizeProfileDesign({
+    ...(published.data() as Partial<ProfileDesignConfig>),
+    designId: published.id,
   });
 }

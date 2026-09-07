@@ -5,6 +5,14 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { JAMB_SUBJECTS, StudentProfile } from "@/lib/student-types";
 import { defaultSiteSettings, SiteSettings } from "@/lib/site-settings";
+import {
+  getPublishedProfileDesign,
+} from "@/lib/profile-design-service";
+import {
+  defaultProfileDesign,
+  normalizeProfileDesign,
+  type ProfileDesignConfig,
+} from "@/lib/profile-design";
 import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
@@ -22,6 +30,8 @@ export default function ProfilePage() {
 
   const [siteSettings, setSiteSettings] =
     useState<SiteSettings>(defaultSiteSettings);
+const [profileDesign, setProfileDesign] =
+  useState<ProfileDesignConfig>(defaultProfileDesign);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);

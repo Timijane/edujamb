@@ -198,13 +198,19 @@ export default function AdminPage() {
           />
 
           <AdminCard
-            title="Login Experience"
+            title="
+Login Experience"
             description="Control the shared login page background, colours, copy and visual experience."
             href="/admin/login-settings"
             icon="◌"
           />
 
-          <AdminCard
+                 <AdminCard
+            title="Profile Design Studio"
+            description="Design the student profile experience, control layouts, colours, typography, cards, hero sections and visual assets."
+            href="/admin/profile-settings"
+            icon="✦"
+          />   <AdminCard
             title="Media Manager"
             description="Upload and assign the logo, favicon, hero images and homepage section images."
             href="/admin/media"
