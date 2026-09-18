@@ -15,21 +15,17 @@ export type ProfileDesignConfig = {
     title: string;
     subtitle: string;
     eyebrow: string;
-
     backgroundType:
       | "gradient"
       | "image"
       | "mixed"
       | "solid";
-
     backgroundColor: string;
     secondaryColor: string;
     accentColor: string;
-
     backgroundImage: string;
     backgroundImageMediaId: string;
     backgroundPosition: string;
-
     overlayOpacity: number;
     decorations: boolean;
     pattern: boolean;
@@ -72,10 +68,8 @@ export type ProfileDesignConfig = {
   assets: {
     logo: string;
     logoMediaId: string;
-
     heroImage: string;
     heroImageMediaId: string;
-
     backgroundImage: string;
     backgroundImageMediaId: string;
   };
@@ -85,7 +79,7 @@ export type ProfileDesignConfig = {
 };
 
 export const defaultProfileDesign: ProfileDesignConfig = {
-  version: 1,
+  version: 2,
   designId: "edujamb-default",
   name: "EduJAMB Default",
   status: "published",
@@ -102,17 +96,13 @@ export const defaultProfileDesign: ProfileDesignConfig = {
     subtitle:
       "Set up your learning identity and unlock your personalized JAMB preparation experience.",
     eyebrow: "Student onboarding",
-
     backgroundType: "mixed",
-
     backgroundColor: "#6d28d9",
     secondaryColor: "#312e81",
     accentColor: "#c084fc",
-
     backgroundImage: "",
     backgroundImageMediaId: "",
     backgroundPosition: "center",
-
     overlayOpacity: 0.28,
     decorations: true,
     pattern: true,
@@ -161,6 +151,7 @@ export const defaultProfileDesign: ProfileDesignConfig = {
     backgroundImageMediaId: "",
   },
 };
+
 export function normalizeProfileDesign(
   value?: Partial<ProfileDesignConfig> | null
 ): ProfileDesignConfig {
@@ -204,6 +195,7 @@ export function normalizeProfileDesign(
     },
   };
 }
+
 export type ProfileDesignSummary = {
   designId: string;
   name: string;
