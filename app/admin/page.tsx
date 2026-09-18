@@ -210,7 +210,24 @@ Login Experience"
             description="Design the student profile experience, control layouts, colours, typography, cards, hero sections and visual assets."
             href="/admin/profile-settings"
             icon="✦"
-          />   <AdminCard
+          />
+          {admin?.role === "super_admin" && (
+            <AdminCard
+              title="Student Dashboard Control Center"
+              description="Control student navigation, dashboard layout, widgets, appearance, features and platform rules."
+              href="/admin/student-dashboard"
+              icon="◆"
+            />
+          )}
+
+          {admin?.role === "super_admin" && (
+            <AdminCard
+              title="Student Request Center"
+              description="Review and approve student subject, preference and account change requests."
+              href="/admin/student-requests"
+              icon="↔"
+            />
+          )}   <AdminCard
             title="Media Manager"
             description="Upload and assign the logo, favicon, hero images and homepage section images."
             href="/admin/media"
