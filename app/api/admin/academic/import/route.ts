@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyBearerToken } from "@/lib/auth-server";
 import { parseAcademicDocument } from "@/lib/academic-document-parser";
+import { screenAcademicText } from "@/lib/academic-document-screening";
 
 export const runtime = "nodejs";
 
@@ -89,6 +90,8 @@ export async function POST(request: Request) {
 
     const parsed = await parseAcademicDocument(file);
 
+    const elements = screenAcademicText(parsed.text);
+
     const ref = getAdminDb().collection("academicImports").doc();
 
     await ref.set({
@@ -96,7 +99,9 @@ export async function POST(request: Request) {
       contentType: parsed.contentType,
       size: file.size,
       extractedText: parsed.text,
-      status: "draft",
+      elements,
+      elementCount: elements.length,
+      status: "screened",
       reviewStatus: "pending",
       uploadedBy: token.uid,
       uploadedAt: FieldValue.serverTimestamp(),
@@ -109,7 +114,8 @@ export async function POST(request: Request) {
       importId: ref.id,
       fileName: parsed.fileName,
       extractedCharacters: parsed.text.length,
-      status: "draft",
+      elementCount: elements.length,
+      status: "screened",
     });
   } catch (error) {
     console.error(error);
