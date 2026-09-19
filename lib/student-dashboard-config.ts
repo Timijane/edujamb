@@ -83,6 +83,30 @@ export type StudentDashboardConfig = {
     sectionSpacing: "compact" | "standard" | "relaxed";
   };
 
+  hero: {
+    enabled: boolean;
+    backgroundMode: "color" | "gradient" | "image" | "image-gradient";
+    backgroundColor: string;
+    gradientStart: string;
+    gradientEnd: string;
+    gradientDirection: string;
+    imageUrl: string;
+    imagePosition: string;
+    imageSize: "cover" | "contain";
+    overlayEnabled: boolean;
+    overlayColor: string;
+    overlayOpacity: number;
+    showWelcomeText: boolean;
+    showUsername: boolean;
+    showTargetScore: boolean;
+    showSubjects: boolean;
+    showExam: boolean;
+    customText: string;
+    textColor: string;
+    radius: number;
+    shadow: string;
+  };
+
   widgets: DashboardWidget[];
 
   features: {
@@ -578,6 +602,30 @@ export const defaultStudentDashboardConfig: StudentDashboardConfig = {
     allowCommunityPosts: true,
     allowPictureUploads: true,
     allowBattleChallenges: true,
+  },
+
+  hero: {
+    enabled: true,
+    backgroundMode: "gradient",
+    backgroundColor: "#6d28d9",
+    gradientStart: "#6d28d9",
+    gradientEnd: "#4c1d95",
+    gradientDirection: "135deg",
+    imageUrl: "",
+    imagePosition: "center",
+    imageSize: "cover",
+    overlayEnabled: false,
+    overlayColor: "#000000",
+    overlayOpacity: 0.35,
+    showWelcomeText: true,
+    showUsername: true,
+    showTargetScore: true,
+    showSubjects: true,
+    showExam: true,
+    customText: "",
+    textColor: "#ffffff",
+    radius: 28,
+    shadow: "0 18px 45px rgba(16, 24, 40, 0.12)",
   },
 };
 

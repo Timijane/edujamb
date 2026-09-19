@@ -1510,3 +1510,222 @@ a {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* =========================================================
+   EDUJAMB APPLICATION DESIGN SYSTEM
+   Student dashboard and authenticated app
+   ========================================================= */
+
+:root {
+  --edu-app-bg: #f7f8fc;
+  --edu-surface: #ffffff;
+  --edu-surface-muted: #f4f5f9;
+  --edu-border: #e5e7eb;
+  --edu-border-strong: #d9dce5;
+
+  --edu-text: #171923;
+  --edu-text-secondary: #5f6472;
+  --edu-text-muted: #8a909d;
+
+  --edu-primary: #6d28d9;
+  --edu-primary-dark: #5b21b6;
+  --edu-primary-soft: #f1ebff;
+
+  --edu-success: #16a34a;
+  --edu-warning: #d97706;
+  --edu-danger: #dc2626;
+
+  --edu-radius-sm: 10px;
+  --edu-radius-md: 14px;
+  --edu-radius-lg: 18px;
+  --edu-radius-xl: 22px;
+
+  --edu-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --edu-shadow-md: 0 8px 24px rgba(16, 24, 40, 0.06);
+  --edu-shadow-lg: 0 18px 45px rgba(16, 24, 40, 0.08);
+
+  --edu-header-height: 68px;
+  --edu-sidebar-width: 248px;
+
+  --edu-content-max: 1440px;
+
+  --edu-space-1: 4px;
+  --edu-space-2: 8px;
+  --edu-space-3: 12px;
+  --edu-space-4: 16px;
+  --edu-space-5: 20px;
+  --edu-space-6: 24px;
+  --edu-space-7: 32px;
+  --edu-space-8: 40px;
+}
+
+/* Authenticated application canvas */
+
+.edu-app {
+  min-height: 100dvh;
+  background: var(--edu-app-bg);
+  color: var(--edu-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.edu-app * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.edu-app button,
+.edu-app a,
+.edu-app input,
+.edu-app select,
+.edu-app textarea {
+  font: inherit;
+}
+
+.edu-app button,
+.edu-app a {
+  touch-action: manipulation;
+}
+
+.edu-app :focus-visible {
+  outline: 3px solid rgba(109, 40, 217, 0.28);
+  outline-offset: 2px;
+}
+
+/* Controlled application content width */
+
+.edu-app-content {
+  width: 100%;
+  max-width: var(--edu-content-max);
+  margin-inline: auto;
+}
+
+/* Application surfaces */
+
+.edu-surface {
+  background: var(--edu-surface);
+  border: 1px solid var(--edu-border);
+  border-radius: var(--edu-radius-lg);
+  box-shadow: var(--edu-shadow-sm);
+}
+
+.edu-surface-elevated {
+  background: var(--edu-surface);
+  border: 1px solid var(--edu-border);
+  border-radius: var(--edu-radius-lg);
+  box-shadow: var(--edu-shadow-md);
+}
+
+/* Consistent application controls */
+
+.edu-control {
+  min-height: 42px;
+  border-radius: var(--edu-radius-md);
+}
+
+.edu-button {
+  min-height: 42px;
+  padding-inline: 16px;
+  border-radius: var(--edu-radius-md);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.edu-icon-button {
+  display: inline-flex;
+  min-height: 42px;
+  min-width: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--edu-radius-md);
+}
+
+/* Prevent accidental horizontal overflow */
+
+.edu-app,
+.edu-app main,
+.edu-app section {
+  min-width: 0;
+}
+
+.edu-app img,
+.edu-app video,
+.edu-app canvas,
+.edu-app svg {
+  max-width: 100%;
+}
+
+/* Cleaner application scrollbar */
+
+.edu-app {
+  scrollbar-width: thin;
+  scrollbar-color: #c9cdd7 transparent;
+}
+
+.edu-app::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.edu-app::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.edu-app::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #c9cdd7;
+}
+
+/* Tablet */
+
+@media (max-width: 1024px) {
+  :root {
+    --edu-header-height: 64px;
+    --edu-sidebar-width: 232px;
+  }
+}
+
+/* Phones */
+
+@media (max-width: 640px) {
+  :root {
+    --edu-header-height: 60px;
+    --edu-radius-lg: 16px;
+    --edu-radius-xl: 18px;
+  }
+
+  .edu-app-content {
+    max-width: 100%;
+  }
+
+  .edu-button {
+    min-height: 40px;
+    padding-inline: 14px;
+    font-size: 13px;
+  }
+}
+
+/* Very small phones */
+
+@media (max-width: 360px) {
+  :root {
+    --edu-space-6: 20px;
+    --edu-space-7: 28px;
+  }
+
+  .edu-button {
+    min-height: 40px;
+    padding-inline: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edu-app *,
+  .edu-app *::before,
+  .edu-app *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

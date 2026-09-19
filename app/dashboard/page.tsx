@@ -225,7 +225,7 @@ export default function DashboardPage() {
 
   return (
     <main
-      className="min-h-screen"
+      className="edu-app min-h-screen"
       style={{
         background: appearance.pageBackground,
         color: appearance.textColor,
@@ -448,12 +448,7 @@ function Overview({
         targetScore={student?.targetScore ?? ""}
         exam={account?.selectedExam ?? "JAMB"}
         subjects={subjects}
-        primaryColor={appearance.primaryColor}
-        secondaryColor={appearance.secondaryColor}
-        gradientEnabled={appearance.gradientEnabled}
-        gradientStart={appearance.gradientStart}
-        gradientEnd={appearance.gradientEnd}
-        gradientDirection={appearance.gradientDirection}
+        hero={config.hero}
       />
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">

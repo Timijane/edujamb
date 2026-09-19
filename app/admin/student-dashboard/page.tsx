@@ -18,6 +18,8 @@ import {
   saveStudentDashboardConfig,
 } from "@/lib/student-dashboard-config-service";
 
+import HeroDesigner from "@/components/admin/HeroDesigner";
+
 export default function StudentDashboardAdminPage() {
   const router = useRouter();
 
@@ -402,6 +404,16 @@ export default function StudentDashboardAdminPage() {
             </div>
           </div>
         </section>
+
+        <HeroDesigner
+          value={config.hero}
+          onChange={(hero) =>
+            setConfig((current) => ({
+              ...current,
+              hero,
+            }))
+          }
+        />
 
         <section className="mt-8 rounded-3xl border border-white/10 bg-white/[0.03] p-6">
           <div>
