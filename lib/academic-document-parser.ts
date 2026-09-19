@@ -1,4 +1,3 @@
-import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
 
 export type ParsedAcademicDocument = {
@@ -8,14 +7,19 @@ export type ParsedAcademicDocument = {
 };
 
 export async function parseAcademicDocument(
-  file: File
+  file: File,
 ): Promise<ParsedAcademicDocument> {
   const buffer = Buffer.from(await file.arrayBuffer());
-
   let text = "";
 
-  if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+  if (
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf")
+  ) {
+    const { PDFParse } = await import("pdf-parse");
+
     const parser = new PDFParse({ data: buffer });
+
     try {
       const result = await parser.getText();
       text = result.text;
@@ -47,12 +51,14 @@ export async function parseAcademicDocument(
 
   if (!text) {
     throw new Error(
-      "No readable text was found in this document. If it is a scanned PDF, OCR will be required."
+      "No readable text was found in this document. If it is a scanned PDF, OCR will be required.",
     );
   }
 
   if (text.length > 500000) {
-    throw new Error("Document is too large to process. Maximum extracted text is 500,000 characters.");
+    throw new Error(
+      "Document is too large to process. Maximum extracted text is 500,000 characters.",
+    );
   }
 
   return {
