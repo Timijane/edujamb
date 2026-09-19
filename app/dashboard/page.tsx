@@ -1,8 +1,41 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import {
+  Award,
+  Bell,
+  BookOpen,
+  Bookmark,
+  CalendarDays,
+  ChartNoAxesColumn,
+  CreditCard,
+  Files,
+  GraduationCap,
+  History,
+  House,
+  Lightbulb,
+  Library,
+  Medal,
+  MessageCircle,
+  MessagesSquare,
+  PenLine,
+  School,
+  Settings,
+  Sparkles,
+  Swords,
+  Target,
+  Trophy,
+  Users,
+  User,
+  Video,
+  Circle,
+} from "lucide-react";
+
+import type { ComponentType } from "react";
+
+import type { LucideIcon } from "lucide-react";
 
 import { auth } from "@/lib/firebase";
 import type {
@@ -46,7 +79,7 @@ type DashboardConfigResponse = {
 export default function DashboardPage() {
   const router = useRouter();
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [student, setStudent] = useState<Student | null>(null);
   const [account, setAccount] = useState<Account | null>(null);
   const [config, setConfig] =
@@ -603,7 +636,7 @@ function DashboardNavLink({
           color: appearance.primaryColor,
         }}
       >
-        {item.icon}
+        <DashboardIcon name={item.icon} />
       </span>
 
       <span
@@ -616,6 +649,41 @@ function DashboardNavLink({
       </span>
     </a>
   );
+}
+
+function DashboardIcon({ name }: { name: string }) {
+  const iconMap: Record<string, ComponentType<any>> = {
+    home: House,
+    "book-open": BookOpen,
+    "graduation-cap": GraduationCap,
+    library: Library,
+    files: Files,
+    bookmark: Bookmark,
+    "pen-line": PenLine,
+    history: History,
+    chart: ChartNoAxesColumn,
+    calendar: CalendarDays,
+    sparkles: Sparkles,
+    lightbulb: Lightbulb,
+    swords: Swords,
+    target: Target,
+    trophy: Trophy,
+    medal: Medal,
+    video: Video,
+    school: School,
+    users: Users,
+    "message-circle": MessageCircle,
+    "messages-square": MessagesSquare,
+    bell: Bell,
+    user: User,
+    settings: Settings,
+    "credit-card": CreditCard,
+    award: Award,
+  };
+
+  const Icon = iconMap[name] ?? Circle;
+
+  return <Icon size={17} strokeWidth={2.2} />;
 }
 
 function featureAllowsItem(
