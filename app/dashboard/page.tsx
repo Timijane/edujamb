@@ -241,7 +241,7 @@ export default function DashboardPage() {
       >
         <div
           className={cn(
-            "mx-auto flex items-center justify-between px-4 py-3 sm:px-6",
+            "mx-auto flex min-h-[60px] items-center justify-between gap-3 px-3 sm:px-5 lg:min-h-[64px] lg:px-6",
             contentWidthClass(config.layout.contentWidth)
           )}
         >
@@ -250,7 +250,7 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="rounded-xl border px-3 py-2 text-lg lg:hidden"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-base lg:hidden"
                 style={{
                   borderColor: appearance.cardBorderColor,
                   background: appearance.cardBackground,
@@ -272,7 +272,7 @@ export default function DashboardPage() {
               </p>
 
               <h1
-                className="text-xl font-black"
+                className="text-lg font-black sm:text-xl"
                 style={{
                   fontWeight: appearance.headingWeight,
                 }}
@@ -285,7 +285,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <a
               href="/profile"
-              className="hidden rounded-xl border px-4 py-2 text-sm font-bold sm:block"
+              className="hidden max-w-[180px] truncate rounded-xl border px-3 py-2 text-sm font-bold sm:block"
               style={{
                 borderColor: appearance.cardBorderColor,
                 background: appearance.cardBackground,
@@ -299,7 +299,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={logout}
-              className="rounded-xl px-4 py-2 text-sm font-black text-white"
+              className="rounded-xl px-3 py-2 text-sm font-black text-white sm:px-4"
               style={{
                 background: appearance.primaryColor,
               }}
@@ -312,7 +312,7 @@ export default function DashboardPage() {
 
       <div
         className={cn(
-          "mx-auto flex",
+          "mx-auto flex w-full px-3 sm:px-5 lg:px-6",
           contentWidthClass(config.layout.contentWidth)
         )}
       >
@@ -370,7 +370,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <section className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:py-8">
+        <section className="min-w-0 flex-1 px-3 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-6">
           {config.navigation.enabled &&
             config.navigation.style === "topbar" && (
               <div className="mb-6 overflow-x-auto">
@@ -441,7 +441,7 @@ function Overview({
   const subjects = student?.subjects ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="edu-dashboard-overview space-y-5">
       <OverviewWelcome
         firstName={student?.firstName ?? "Student"}
         username={student?.username ?? ""}
@@ -451,7 +451,7 @@ function Overview({
         hero={config.hero}
       />
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <OverviewStatCard
           label="Study Today"
           value="0 min"
@@ -522,7 +522,7 @@ function Overview({
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-black">
+            <h2 className="text-lg font-black sm:text-xl">
               Continue Your Preparation
             </h2>
 
@@ -731,7 +731,7 @@ function contentWidthClass(
     case "wide":
       return "max-w-7xl";
     case "full":
-      return "max-w-[1600px]";
+      return "max-w-[1440px]";
     default:
       return "max-w-7xl";
   }

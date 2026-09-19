@@ -1729,3 +1729,203 @@ a {
   }
 }
 
+
+
+/* =========================================================
+   EDUJAMB LEVEL 1 — APPLICATION DENSITY & RESPONSIVE PASS
+   ========================================================= */
+
+.edu-app {
+  overflow-x: hidden;
+}
+
+.edu-app .edu-dashboard-overview {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Application-style density */
+.edu-dashboard-overview .gap-5 {
+  gap: 16px;
+}
+
+.edu-dashboard-overview .gap-6 {
+  gap: 20px;
+}
+
+.edu-dashboard-overview .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 20px;
+}
+
+/* Hero: useful, visible, but not a giant landing-page banner */
+.edu-dashboard-hero {
+  isolation: isolate;
+}
+
+.edu-dashboard-hero h1 {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  line-height: 1.05;
+}
+
+.edu-dashboard-hero > div.relative.z-10 {
+  max-width: 900px;
+}
+
+.edu-dashboard-hero .mt-7 {
+  margin-top: 20px;
+}
+
+.edu-dashboard-hero .rounded-2xl {
+  border-radius: 14px;
+}
+
+/* Keep application controls compact */
+.edu-app button,
+.edu-app a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.edu-app input,
+.edu-app select,
+.edu-app textarea {
+  max-width: 100%;
+}
+
+/* Prevent cards/content from forcing the viewport wider */
+.edu-dashboard-overview > *,
+.edu-dashboard-overview [class*="grid"] {
+  min-width: 0;
+}
+
+.edu-dashboard-overview [class*="truncate"] {
+  min-width: 0;
+}
+
+/* Desktop application workspace */
+@media (min-width: 1280px) {
+  .edu-dashboard-overview {
+    max-width: 100%;
+  }
+
+  .edu-dashboard-overview .gap-4 {
+    gap: 14px;
+  }
+
+  .edu-dashboard-overview .gap-5 {
+    gap: 16px;
+  }
+
+  .edu-dashboard-overview .gap-6 {
+    gap: 20px;
+  }
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .edu-dashboard-hero {
+    min-height: 205px;
+  }
+
+  .edu-dashboard-overview {
+    gap: 18px;
+  }
+}
+
+/* Phones */
+@media (max-width: 640px) {
+  .edu-app {
+    min-width: 0;
+  }
+
+  .edu-dashboard-overview {
+    width: 100%;
+  }
+
+  .edu-dashboard-hero {
+    min-height: 190px;
+    padding: 20px;
+    border-radius: 16px !important;
+  }
+
+  .edu-dashboard-hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .edu-dashboard-hero .mt-7 {
+    margin-top: 16px;
+  }
+
+  .edu-dashboard-hero .grid {
+    gap: 8px;
+  }
+
+  .edu-dashboard-hero .grid > div {
+    min-width: 0;
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .edu-dashboard-hero .grid > div p:last-child {
+    font-size: 15px;
+  }
+
+  .edu-dashboard-overview .gap-5 {
+    gap: 12px;
+  }
+
+  .edu-dashboard-overview .gap-6 {
+    gap: 16px;
+  }
+
+  .edu-dashboard-overview .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 16px;
+  }
+
+  /* Better touch targets without oversized controls */
+  .edu-app .edu-button,
+  .edu-app .edu-control,
+  .edu-app .edu-icon-button {
+    min-height: 40px;
+  }
+
+  /* Bottom navigation needs safe breathing room */
+  .edu-app {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .edu-app header {
+    min-height: 60px;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  .edu-dashboard-hero {
+    min-height: 180px;
+    padding: 16px;
+  }
+
+  .edu-dashboard-hero h1 {
+    font-size: 1.6rem;
+  }
+
+  .edu-dashboard-overview .gap-5 {
+    gap: 10px;
+  }
+
+  .edu-dashboard-overview .gap-6 {
+    gap: 14px;
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .edu-app *,
+  .edu-app *::before,
+  .edu-app *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
