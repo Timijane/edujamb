@@ -1,3 +1,4 @@
+import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 
 export type ParsedAcademicDocument = {
@@ -16,16 +17,8 @@ export async function parseAcademicDocument(
     file.type === "application/pdf" ||
     file.name.toLowerCase().endsWith(".pdf")
   ) {
-    const { PDFParse } = await import("pdf-parse");
-
-    const parser = new PDFParse({ data: buffer });
-
-    try {
-      const result = await parser.getText();
-      text = result.text;
-    } finally {
-      await parser.destroy();
-    }
+    const result = await pdfParse(buffer);
+    text = result.text;
   } else if (
     file.type ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
