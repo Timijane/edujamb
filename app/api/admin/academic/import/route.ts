@@ -5,6 +5,28 @@ import { verifyBearerToken } from "@/lib/auth-server";
 import { parseAcademicDocument } from "@/lib/academic-document-parser";
 import { screenAcademicText } from "@/lib/academic-document-screening";
 
+function removeUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => removeUndefined(item))
+      .filter((item) => item !== undefined) as T;
+  }
+
+  if (value && typeof value === "object") {
+    const result: Record<string, unknown> = {};
+
+    for (const [key, item] of Object.entries(value)) {
+      if (item !== undefined) {
+        result[key] = removeUndefined(item);
+      }
+    }
+
+    return result as T;
+  }
+
+  return value;
+}
+
 export const runtime = "nodejs";
 
 async function requireSuperAdmin(request: Request) {
@@ -91,6 +113,7 @@ export async function POST(request: Request) {
     const parsed = await parseAcademicDocument(file);
 
     const elements = screenAcademicText(parsed.text);
+    const safeElements = removeUndefined(elements);
 
     const ref = getAdminDb().collection("academicImports").doc();
 
@@ -99,7 +122,7 @@ export async function POST(request: Request) {
       contentType: parsed.contentType,
       size: file.size,
       extractedText: parsed.text,
-      elements,
+      elements: safeElements,
       elementCount: elements.length,
       status: "screened",
       reviewStatus: "pending",
