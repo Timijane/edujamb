@@ -278,7 +278,7 @@ export const defaultStudentDashboardConfig: StudentDashboardConfig = {
       {
         id: "cbt",
         label: "CBT Practice",
-        route: "/dashboard/cbt",
+        route: "/dashboard/practice",
         icon: "pen-line",
         group: "practice",
         visible: true,
@@ -296,7 +296,7 @@ export const defaultStudentDashboardConfig: StudentDashboardConfig = {
       {
         id: "performance",
         label: "Performance & Analytics",
-        route: "/dashboard/performance",
+        route: "/dashboard/analytics",
         icon: "chart",
         group: "practice",
         visible: true,
@@ -315,7 +315,7 @@ export const defaultStudentDashboardConfig: StudentDashboardConfig = {
       {
         id: "ai-coach",
         label: "AI JAMB Coach",
-        route: "/dashboard/ai-coach",
+        route: "/dashboard/coach",
         icon: "sparkles",
         group: "preparation",
         visible: true,
