@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyBearerToken, isAllowedRole } from "@/lib/auth-server";
-import { academicSlug } from "@/lib/academic-constants";
+import { academicSlug, DEFAULT_JAMB_SUBJECTS } from "@/lib/academic-constants";
 
 export const runtime = "nodejs";
 
@@ -74,6 +74,8 @@ export async function GET(request: Request) {
   }
 }
 
+
+
 export async function POST(request: Request) {
   try {
     const admin = await requireAdmin(request);
@@ -84,6 +86,7 @@ export async function POST(request: Request) {
     const code = text(body.code).toUpperCase();
     const description = text(body.description);
     const active = body.active !== false;
+    const published = body.published === true;
     const order = number(body.order, 0);
 
     if (!name) {
@@ -136,6 +139,7 @@ export async function POST(request: Request) {
       code,
       description,
       active,
+      published,
       order,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
@@ -151,6 +155,7 @@ export async function POST(request: Request) {
         code,
         description,
         active,
+        published,
         order,
       },
     });

@@ -135,30 +135,24 @@ export default function AcademicAdminPage() {
     setMessage("");
 
     try {
-      for (const subject of DEFAULT_JAMB_SUBJECTS) {
-        const exists = subjects.some(
-          (item) => item.code === subject.code
-        );
-
-        if (!exists) {
-          await api("/api/admin/academic/subjects", {
-            method: "POST",
-            body: JSON.stringify({
-              name: subject.name,
-              code: subject.code,
-              description: "",
-              active: true,
-              published: false,
-              order: subject.order,
-            }),
-          });
-        }
-      }
+      const data = await api(
+        "/api/admin/academic/subjects/standard",
+        { method: "POST" }
+      );
 
       await loadSubjects();
-      setMessage("Standard JAMB subject list created as drafts.");
+
+      setMessage(
+        data.count > 0
+          ? `Created ${data.count} missing standard JAMB subjects as drafts.`
+          : "All standard JAMB subjects already exist."
+      );
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to create.");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to create standard JAMB subjects."
+      );
     } finally {
       setSaving(false);
     }
