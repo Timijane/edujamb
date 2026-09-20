@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getAuth } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 type Topic = {
   id: string;
@@ -31,7 +31,6 @@ export default function SubjectsPage() {
 
     async function loadSubjects() {
       try {
-        const auth = getAuth();
         const user = auth.currentUser;
 
         if (!user) {
