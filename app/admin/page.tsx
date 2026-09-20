@@ -190,6 +190,14 @@ export default function AdminPage() {
 
         {/* MANAGEMENT GRID */}
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {admin?.role === "super_admin" && (
+            <AdminCard
+              title="Academic Manager"
+              description="Manage JAMB subjects, scheme of work, academic document imports, question screening and the question bank."
+              href="/admin/academic"
+              icon="📚"
+            />
+          )}
           <AdminCard
             title="Homepage CMS"
             description="Edit homepage text, buttons, repeatable content, announcements and display settings."
@@ -229,14 +237,7 @@ Login Experience"
             />
           )}
 
-          {admin?.role === "super_admin" && (
-            <AdminCard
-              title="Academic Manager"
-              description="Manage JAMB subjects, scheme of work, academic document imports, question screening and the question bank."
-              href="/admin/academic"
-              icon="📚"
-            />
-          )}   <AdminCard
+   <AdminCard
             title="Media Manager"
             description="Upload and assign the logo, favicon, hero images and homepage section images."
             href="/admin/media"
