@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 type Topic = {
@@ -29,15 +30,15 @@ export default function SubjectsPage() {
   useEffect(() => {
     let mounted = true;
 
-    async function loadSubjects() {
-      try {
-        const user = auth.currentUser;
-
-        if (!user) {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        if (mounted) {
           window.location.href = "/login";
-          return;
         }
+        return;
+      }
 
+      try {
         const token = await user.getIdToken();
 
         const response = await fetch("/api/student/subjects", {
@@ -66,12 +67,11 @@ export default function SubjectsPage() {
       } finally {
         if (mounted) setLoading(false);
       }
-    }
-
-    loadSubjects();
+    });
 
     return () => {
       mounted = false;
+      unsubscribe();
     };
   }, []);
 
