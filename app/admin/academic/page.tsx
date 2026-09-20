@@ -325,6 +325,74 @@ export default function AcademicAdminPage() {
           </div>
         )}
 
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <button
+            type="button"
+            onClick={() => setTab("subjects")}
+            className="group rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-xl">
+              📚
+            </div>
+            <h2 className="font-bold text-gray-900">Subjects & Scheme</h2>
+            <p className="mt-1 text-sm leading-6 text-gray-500">
+              Manage JAMB subjects and their scheme of work.
+            </p>
+            <span className="mt-4 inline-block text-sm font-semibold text-purple-700">
+              Manage Academic Structure →
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTab("upload")}
+            className="group rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl">
+              📄
+            </div>
+            <h2 className="font-bold text-gray-900">Upload Academic Document</h2>
+            <p className="mt-1 text-sm leading-6 text-gray-500">
+              Upload authoritative PDF, DOCX or TXT academic documents.
+            </p>
+            <span className="mt-4 inline-block text-sm font-semibold text-blue-700">
+              Upload Document →
+            </span>
+          </button>
+
+          <a
+            href="/admin/academic/imports"
+            className="group rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-xl">
+              🧠
+            </div>
+            <h2 className="font-bold text-gray-900">Intelligent Import</h2>
+            <p className="mt-1 text-sm leading-6 text-gray-500">
+              Screen documents, detect questions and review imports before publishing.
+            </p>
+            <span className="mt-4 inline-block text-sm font-semibold text-amber-700">
+              Open Import Control Room →
+            </span>
+          </a>
+
+          <a
+            href="/admin/academic/questions"
+            className="group rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-green-50 text-xl">
+              ❓
+            </div>
+            <h2 className="font-bold text-gray-900">Question Bank</h2>
+            <p className="mt-1 text-sm leading-6 text-gray-500">
+              Review, edit, publish and manage academic questions.
+            </p>
+            <span className="mt-4 inline-block text-sm font-semibold text-green-700">
+              Manage Questions →
+            </span>
+          </a>
+        </section>
+
         <div className="edu-surface overflow-hidden">
           <div className="flex overflow-x-auto border-b">
             <button
