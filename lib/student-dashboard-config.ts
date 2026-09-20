@@ -632,6 +632,22 @@ export const defaultStudentDashboardConfig: StudentDashboardConfig = {
 export function normalizeStudentDashboardConfig(
   value?: Partial<StudentDashboardConfig> | null
 ): StudentDashboardConfig {
+  const navigationItems = (
+    value?.navigation?.items ??
+    defaultStudentDashboardConfig.navigation.items
+  ).map((item) => {
+    const routeMigrations: Record<string, string> = {
+      "/dashboard/cbt": "/dashboard/practice",
+      "/dashboard/performance": "/dashboard/analytics",
+      "/dashboard/ai-coach": "/dashboard/coach",
+    };
+
+    return {
+      ...item,
+      route: routeMigrations[item.route] ?? item.route,
+    };
+  });
+
   return {
     ...defaultStudentDashboardConfig,
     ...value,
@@ -642,9 +658,7 @@ export function normalizeStudentDashboardConfig(
       groups: value?.navigation?.groups
         ? value.navigation.groups
         : defaultStudentDashboardConfig.navigation.groups,
-      items: value?.navigation?.items
-        ? value.navigation.items
-        : defaultStudentDashboardConfig.navigation.items,
+      items: navigationItems,
     },
 
     appearance: {
