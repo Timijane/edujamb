@@ -1,34 +1,65 @@
 import { GoogleGenAI } from "@google/genai";
 import type { AIRequest } from "./ai-router";
 
-export async function generateWithGemini(
-  request: AIRequest,
-): Promise<string> {
+const MODEL = "gemini-3.8-flash";
+
+function getClient() {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not configured.");
   }
 
-  const ai = new GoogleGenAI({
-    apiKey,
-  });
+  return new GoogleGenAI({ apiKey });
+}
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.6-flash",
-    contents: request.userPrompt,
-    config: {
-      systemInstruction: request.systemPrompt,
-      maxOutputTokens: request.maxTokens ?? 1000,
-      temperature: 0.4,
+export async function generateWithGemini(
+  request: AIRequest,
+): Promise<string> {
+  const ai = getClient();
+
+  const interaction = await ai.interactions.create({
+    model: MODEL,
+    input: [
+      {
+        type: "text",
+        text: request.userPrompt,
+      },
+    ],
+    system_instruction: request.systemPrompt,
+    generation_config: {
+      max_output_tokens: request.maxTokens ?? 1200,
     },
   });
 
-  const text = response.text?.trim();
+  const text = interaction.output_text?.trim();
 
   if (!text) {
     throw new Error("Gemini returned an empty response.");
   }
 
   return text;
+}
+
+export async function streamWithGemini(
+  request: AIRequest,
+  previousInteractionId?: string,
+) {
+  const ai = getClient();
+
+  return ai.interactions.create({
+    model: MODEL,
+    input: [
+      {
+        type: "text",
+        text: request.userPrompt,
+      },
+    ],
+    system_instruction: request.systemPrompt,
+    previous_interaction_id: previousInteractionId,
+    generation_config: {
+      max_output_tokens: request.maxTokens ?? 1200,
+    },
+    stream: true,
+  });
 }

@@ -78,6 +78,7 @@ export default function CoachPage() {
   const [context, setContext] = useState<CoachContext | null>(null);
   const [error, setError] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [previousInteractionId, setPreviousInteractionId] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -126,6 +127,11 @@ export default function CoachPage() {
         role: "user",
         content: userMessage,
       },
+      {
+        id: assistantMessageId,
+        role: "assistant",
+        content: "",
+      },
     ]);
 
     setLoading(true);
@@ -139,7 +145,7 @@ export default function CoachPage() {
 
       const token = await user.getIdToken();
 
-      const response = await fetch("/api/academic/coach", {
+      const response = await fetch("/api/academic/coach/stream", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,34 +153,93 @@ export default function CoachPage() {
         },
         body: JSON.stringify({
           message: userMessage,
+          previousInteractionId,
         }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
+      if (!response.ok || !response.body) {
+        const data = await response.json().catch(() => ({}));
         throw new Error(
           data.error || "Unable to contact JAMB Coach.",
         );
       }
 
-      setContext(data.coachContext);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-      setMessages((current) => [
-        ...current,
-        {
-          id: assistantMessageId,
-          role: "assistant",
-          content:
-            data.response ||
-            "I received your question, but I couldn't generate a response.",
-        },
-      ]);
+      while (true) {
+        const { value, done } = await reader.read();
+
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        const events = buffer.split("\n\n");
+        buffer = events.pop() || "";
+
+        for (const event of events) {
+          const line = event
+            .split("\n")
+            .find((item) => item.startsWith("data: "));
+
+          if (!line) continue;
+
+          const raw = line.slice(6);
+
+          if (raw === "[DONE]") continue;
+
+          try {
+            const data = JSON.parse(raw);
+
+            if (data.type === "text" && data.text) {
+              setMessages((current) =>
+                current.map((item) =>
+                  item.id === assistantMessageId
+                    ? {
+                        ...item,
+                        content: item.content + data.text,
+                      }
+                    : item,
+                ),
+              );
+            }
+
+            if (
+              data.type === "complete" &&
+              data.interactionId
+            ) {
+              setPreviousInteractionId(data.interactionId);
+            }
+
+            if (data.type === "error") {
+              throw new Error(
+                data.error || "AI stream failed.",
+              );
+            }
+          } catch (parseError) {
+            if (
+              parseError instanceof Error &&
+              parseError.message === "AI stream failed."
+            ) {
+              throw parseError;
+            }
+          }
+        }
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : "Something went wrong.";
+
+      setMessages((current) =>
+        current.filter(
+          (item) =>
+            item.id !== assistantMessageId ||
+            item.content.trim(),
+        ),
+      );
 
       setError(errorMessage);
     } finally {
