@@ -97,29 +97,33 @@ ${JSON.stringify(analytics.strongAreas.slice(0, 10))}
         try {
           for await (const event of stream) {
             const item = event as {
-              type?: string;
-              delta?: string;
+              event_type?: string;
+              delta?: {
+                type?: string;
+                text?: string;
+              };
               interaction?: {
                 id?: string;
               };
             };
 
             if (
-              item.type === "text_delta" &&
-              typeof item.delta === "string"
+              item.event_type === "step.delta" &&
+              item.delta?.type === "text" &&
+              typeof item.delta.text === "string"
             ) {
               controller.enqueue(
                 encoder.encode(
                   `data: ${JSON.stringify({
                     type: "text",
-                    text: item.delta,
+                    text: item.delta.text,
                   })}\n\n`,
                 ),
               );
             }
 
             if (
-              item.type === "interaction_complete" &&
+              item.event_type === "interaction.completed" &&
               item.interaction?.id
             ) {
               controller.enqueue(
