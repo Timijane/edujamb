@@ -385,6 +385,22 @@ export default function AcademicAdminPage() {
               Manage Questions →
             </span>
           </a>
+
+          <a
+            href="/admin/academic/resources"
+            className="group rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-purple-50 text-xl">
+              📚
+            </div>
+            <h2 className="font-bold text-gray-900">AI Learning Resources</h2>
+            <p className="mt-1 text-sm leading-6 text-gray-500">
+              Manage textbooks, study notes and academic resources used by the AI Coach.
+            </p>
+            <span className="mt-4 inline-block text-sm font-semibold text-purple-700">
+              Manage Resources →
+            </span>
+          </a>
         </section>
 
         <div className="edu-surface overflow-hidden">

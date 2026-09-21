@@ -87,6 +87,8 @@ export default function AcademicImportsPage() {
 
   const [topics, setTopics] = useState<TopicDraft[]>([]);
   const [newTopic, setNewTopic] = useState("");
+  const [resourceTitle, setResourceTitle] = useState("");
+  const [resourceType, setResourceType] = useState("textbook");
 
   const [screening, setScreening] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -451,6 +453,56 @@ export default function AcademicImportsPage() {
           : topic,
       ),
     );
+  }
+
+  async function convertResource() {
+    if (!selected) return;
+
+    if (selected.reviewStatus !== "approved") {
+      setMessage("Approve the document before converting it into an AI resource.");
+      return;
+    }
+
+    if (!selectedSubject || !selectedTopic) {
+      setMessage("Select both a subject and topic.");
+      return;
+    }
+
+    const title = resourceTitle.trim() || selected.fileName;
+
+    setSaving(true);
+    setMessage("");
+
+    try {
+      const data = await api(
+        `/api/admin/academic/import/${selected.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            action: "convert_resource",
+            subjectId: selectedSubject,
+            topicId: selectedTopic,
+            resourceType,
+            title,
+          }),
+        },
+      );
+
+      setMessage(
+        `AI resource created as a draft with ${data.chunkCount || 0} searchable chunks. Publish it before the AI Coach can use it.`,
+      );
+
+      setResourceTitle("");
+      await load();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Resource conversion failed.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function convertTopics() {
@@ -1088,6 +1140,106 @@ export default function AcademicImportsPage() {
                     {saving
                       ? "Converting…"
                       : "Convert Topics to Draft Scheme of Work"}
+                  </button>
+                </section>
+
+                <section className="border-t pt-8">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold">
+                      5. AI Learning Resource
+                    </h3>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      Convert this approved document into searchable material
+                      that JAMBMASTER AI Coach can use when teaching students.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <input
+                      className="rounded-xl border px-4 py-3"
+                      placeholder={`Resource title (default: ${selected.fileName})`}
+                      value={resourceTitle}
+                      onChange={(event) =>
+                        setResourceTitle(event.target.value)
+                      }
+                    />
+
+                    <select
+                      className="rounded-xl border px-4 py-3"
+                      value={resourceType}
+                      onChange={(event) =>
+                        setResourceType(event.target.value)
+                      }
+                    >
+                      <option value="textbook">Textbook</option>
+                      <option value="study_note">Study Note</option>
+                      <option value="syllabus">Syllabus</option>
+                      <option value="scheme_of_work">Scheme of Work</option>
+                      <option value="reference">Reference</option>
+                      <option value="other">Other</option>
+                    </select>
+
+                    <select
+                      className="rounded-xl border px-4 py-3"
+                      value={selectedSubject}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setSelectedSubject(value);
+                        loadTopics(value);
+                      }}
+                    >
+                      <option value="">Select subject</option>
+
+                      {subjects.map((subject) => (
+                        <option key={subject.id} value={subject.id}>
+                          {subject.name} ({subject.code})
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="rounded-xl border px-4 py-3"
+                      value={selectedTopic}
+                      onChange={(event) =>
+                        setSelectedTopic(event.target.value)
+                      }
+                      disabled={!selectedSubject || loadingTopics}
+                    >
+                      <option value="">
+                        {loadingTopics
+                          ? "Loading topics…"
+                          : "Select topic"}
+                      </option>
+
+                      {topicsForSubject.map((topic) => (
+                        <option key={topic.id} value={topic.id}>
+                          {topic.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mt-4 rounded-xl bg-purple-50 p-4 text-sm text-purple-800">
+                    <strong>AI retrieval:</strong>{" "}
+                    The document will be split into searchable chunks and
+                    linked to the selected subject and topic. It will remain
+                    inactive and unpublished until reviewed.
+                  </div>
+
+                  <button
+                    className="edu-button edu-button-primary mt-5 w-full"
+                    onClick={convertResource}
+                    disabled={
+                      saving ||
+                      selected.reviewStatus !== "approved" ||
+                      !selectedSubject ||
+                      !selectedTopic
+                    }
+                  >
+                    {saving
+                      ? "Converting…"
+                      : "Convert to AI Learning Resource"}
                   </button>
                 </section>
 
