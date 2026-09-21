@@ -96,7 +96,7 @@ export default function AcademicImportsPage() {
   const [loadingTopics, setLoadingTopics] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function api(url: string, options: RequestInit = {}) {
+  async function api<T = Record<string, unknown>>(url: string, options: RequestInit = {}): Promise<T> {
     const user = auth.currentUser;
 
     if (!user) throw new Error("You are not signed in.");
@@ -115,19 +115,34 @@ export default function AcademicImportsPage() {
       headers,
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    const raw = await response.text();
 
-    if (!response.ok) {
-      throw new Error(data.error || "Request failed.");
+    let data: Record<string, unknown> = {};
+
+    if (contentType.includes("application/json")) {
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error("The server returned invalid JSON.");
+      }
+    } else if (raw.trim()) {
+      throw new Error(raw.trim());
     }
 
-    return data;
+    if (!response.ok) {
+      throw new Error(
+        typeof data.error === "string" ? data.error : "Request failed."
+      );
+    }
+
+    return data as T;
   }
 
   async function load() {
     const [importsData, subjectsData] = await Promise.all([
-      api("/api/admin/academic/import"),
-      api("/api/admin/academic/subjects"),
+      api<{ imports: ImportRecord[] }>("/api/admin/academic/import"),
+      api<{ subjects: Subject[] }>("/api/admin/academic/subjects"),
     ]);
 
     setImports(importsData.imports || []);
@@ -166,7 +181,7 @@ export default function AcademicImportsPage() {
     setLoadingTopics(true);
 
     try {
-      const data = await api(
+      const data = await api<{ topics: Topic[] }>(
         `/api/admin/academic/subjects/${subjectId}/topics`,
       );
 
@@ -240,7 +255,10 @@ export default function AcademicImportsPage() {
     setMessage("");
 
     try {
-      const data = await api("/api/admin/academic/import/screen", {
+      const data = await api<{
+        elements?: ImportElement[];
+        elementCount?: number;
+      }>("/api/admin/academic/import/screen", {
         method: "POST",
         body: JSON.stringify({
           importId: selected.id,
@@ -253,7 +271,10 @@ export default function AcademicImportsPage() {
           ? {
               ...current,
               elements: data.elements || [],
-              elementCount: data.elementCount || 0,
+              elementCount:
+                typeof data.elementCount === "number"
+                  ? data.elementCount
+                  : 0,
               status: "screened",
             }
           : current,
