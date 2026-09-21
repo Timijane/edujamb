@@ -262,24 +262,80 @@ export default function AcademicAdminPage() {
       return;
     }
 
+    const maxSize = 5 * 1024 * 1024;
+
+    if (document.size >= maxSize) {
+      setMessage("Academic documents must be less than 5 MB.");
+      return;
+    }
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain",
+    ];
+
+    const allowedExtensions = [".pdf", ".docx", ".txt"];
+    const extension = document.name
+      .toLowerCase()
+      .slice(document.name.lastIndexOf("."));
+
+    if (
+      !allowedTypes.includes(document.type) &&
+      !allowedExtensions.includes(extension)
+    ) {
+      setMessage("Only PDF, DOCX or TXT documents are allowed.");
+      return;
+    }
+
     setSaving(true);
     setMessage("");
 
     try {
-      const form = new FormData();
-      form.append("file", document);
+      const cloudinaryForm = new FormData();
+      cloudinaryForm.append("file", document);
+      cloudinaryForm.append("upload_preset", "pelumi");
+      cloudinaryForm.append("folder", "edujamb/academic");
+
+      const cloudinaryResponse = await fetch(
+        "https://api.cloudinary.com/v1_1/dmbjrohtn/auto/upload",
+        {
+          method: "POST",
+          body: cloudinaryForm,
+        }
+      );
+
+      const cloudinaryData = await cloudinaryResponse.json();
+
+      if (!cloudinaryResponse.ok) {
+        throw new Error(
+          cloudinaryData?.error?.message || "Cloudinary upload failed."
+        );
+      }
+
+      if (!cloudinaryData.secure_url || !cloudinaryData.public_id) {
+        throw new Error("Cloudinary returned an incomplete upload response.");
+      }
 
       await api("/api/admin/academic/import", {
         method: "POST",
-        body: form,
+        body: JSON.stringify({
+          fileUrl: cloudinaryData.secure_url,
+          publicId: cloudinaryData.public_id,
+          fileName: document.name,
+          contentType: document.type,
+          size: document.size,
+        }),
       });
 
       setDocument(null);
       setMessage(
-        "Document uploaded as a draft import. Review it before publishing."
+        "Document uploaded to Cloudinary and saved as a draft import. Review it before publishing."
       );
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Upload failed.");
+      setMessage(
+        error instanceof Error ? error.message : "Upload failed."
+      );
     } finally {
       setSaving(false);
     }
