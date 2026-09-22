@@ -352,6 +352,7 @@ export default function CoachPage() {
     setMessage("");
     setError("");
     setLoading(true);
+    const assistantId = `assistant-${Date.now()}`;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -383,7 +384,6 @@ export default function CoachPage() {
         ]);
       }
 
-      const assistantId = `assistant-${Date.now()}`;
 
       setMessages((current) => [
         ...current,
@@ -526,12 +526,14 @@ export default function CoachPage() {
           ? err.message
           : "Something went wrong.";
 
+      console.error("AI Coach frontend error:", err);
+
       setError(errorMessage);
 
       setMessages((current) =>
         current.filter(
           (item) =>
-            item.id !== `assistant-${Date.now()}`,
+            item.id !== assistantId,
         ),
       );
     } finally {
