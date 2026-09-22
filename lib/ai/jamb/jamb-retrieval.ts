@@ -41,17 +41,38 @@ function normalize(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function matchesQuery(text: string, query: string): boolean {
-  if (!query) return true;
+function queryRelevance(text: string, query: string): number {
+  if (!query.trim()) return 1;
 
   const normalizedText = text.toLowerCase();
+
   const terms = query
     .toLowerCase()
     .split(/\s+/)
     .map((term) => term.trim())
-    .filter(Boolean);
+    .filter((term) => term.length >= 3);
 
-  return terms.every((term) => normalizedText.includes(term));
+  if (!terms.length) return 0;
+
+  let score = 0;
+
+  for (const term of terms) {
+    if (normalizedText.includes(term)) {
+      score += 1;
+    }
+  }
+
+  const phrase = query.trim().toLowerCase();
+
+  if (phrase.length >= 5 && normalizedText.includes(phrase)) {
+    score += 3;
+  }
+
+  return score;
+}
+
+function matchesQuery(text: string, query: string): boolean {
+  return queryRelevance(text, query) > 0;
 }
 
 function questionMatches(

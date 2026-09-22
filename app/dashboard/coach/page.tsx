@@ -35,10 +35,16 @@ type CoachContext = {
   }[];
 };
 
+type Citation = {
+  title: string;
+  url: string;
+};
+
 type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  citations?: Citation[];
 };
 
 function formatResponse(text: string) {
@@ -131,6 +137,7 @@ export default function CoachPage() {
         id: assistantMessageId,
         role: "assistant",
         content: "",
+        citations: [],
       },
     ]);
 
@@ -203,6 +210,49 @@ export default function CoachPage() {
                     : item,
                 ),
               );
+            }
+
+            if (
+              data.type === "citations" &&
+              Array.isArray(data.citations)
+            ) {
+              const citations: Citation[] = data.citations
+                .filter(
+                  (citation: unknown): citation is Citation =>
+                    typeof citation === "object" &&
+                    citation !== null &&
+                    typeof (citation as Citation).url === "string" &&
+                    (citation as Citation).url.startsWith("http"),
+                )
+                .map((citation: Citation) => ({
+                  title:
+                    typeof citation.title === "string" && citation.title.trim()
+                      ? citation.title.trim()
+                      : citation.url,
+                  url: citation.url,
+                }));
+
+              if (citations.length) {
+                setMessages((current) =>
+                  current.map((item) =>
+                    item.id === assistantMessageId
+                      ? {
+                          ...item,
+                          citations: [
+                            ...(item.citations || []),
+                            ...citations.filter(
+                              (citation) =>
+                                !(item.citations || []).some(
+                                  (existing) =>
+                                    existing.url === citation.url,
+                                ),
+                            ),
+                          ],
+                        }
+                      : item,
+                  ),
+                );
+              }
             }
 
             if (
@@ -450,15 +500,63 @@ export default function CoachPage() {
                         }
                       >
                         {item.role === "assistant" ? (
-                          <div
-                            className="prose prose-sm max-w-none leading-7 sm:text-[15px]"
-                            style={{
-                              color: "var(--edu-text)",
-                            }}
-                            dangerouslySetInnerHTML={{
-                              __html: formatResponse(item.content),
-                            }}
-                          />
+                          <>
+                            <div
+                              className="prose prose-sm max-w-none leading-7 sm:text-[15px]"
+                              style={{
+                                color: "var(--edu-text)",
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html: formatResponse(item.content),
+                              }}
+                            />
+
+                            {item.citations && item.citations.length > 0 && (
+                              <div
+                                className="mt-4 border-t pt-3"
+                                style={{
+                                  borderColor: "var(--edu-border)",
+                                }}
+                              >
+                                <p
+                                  className="mb-2 text-xs font-black uppercase tracking-wide"
+                                  style={{
+                                    color: "var(--edu-text-muted)",
+                                  }}
+                                >
+                                  Sources
+                                </p>
+
+                                <div className="space-y-1.5">
+                                  {item.citations.map((citation) => (
+                                    <a
+                                      key={citation.url}
+                                      href={citation.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block rounded-xl border px-3 py-2 text-xs transition-colors hover:bg-black/5"
+                                      style={{
+                                        borderColor: "var(--edu-border)",
+                                        color: "var(--edu-primary)",
+                                      }}
+                                    >
+                                      <span className="font-bold">
+                                        {citation.title}
+                                      </span>
+                                      <span
+                                        className="mt-0.5 block truncate"
+                                        style={{
+                                          color: "var(--edu-text-muted)",
+                                        }}
+                                      >
+                                        {citation.url}
+                                      </span>
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
                         ) : (
                           <p className="whitespace-pre-wrap text-sm leading-6">
                             {item.content}

@@ -13,6 +13,12 @@ function getClient() {
   return new GoogleGenAI({ apiKey });
 }
 
+const TOOLS = [
+  {
+    type: "google_search" as const,
+  },
+];
+
 export async function generateWithGemini(
   request: AIRequest,
 ): Promise<string> {
@@ -27,6 +33,7 @@ export async function generateWithGemini(
       },
     ],
     system_instruction: request.systemPrompt,
+    tools: TOOLS,
     generation_config: {
       max_output_tokens: request.maxTokens ?? 1200,
     },
@@ -57,6 +64,7 @@ export async function streamWithGemini(
     ],
     system_instruction: request.systemPrompt,
     previous_interaction_id: previousInteractionId,
+    tools: TOOLS,
     generation_config: {
       max_output_tokens: request.maxTokens ?? 1200,
     },

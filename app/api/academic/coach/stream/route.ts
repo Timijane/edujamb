@@ -212,6 +212,49 @@ The retrieval context is supporting academic evidence. Use it when relevant, but
             }
 
             if (
+              item.event_type === "step.completed" &&
+              Array.isArray((item as any).step?.content)
+            ) {
+              const citations = (item as any).step.content
+                .flatMap((content: any) =>
+                  Array.isArray(content?.annotations)
+                    ? content.annotations
+                    : [],
+                )
+                .filter(
+                  (annotation: any) =>
+                    annotation?.type === "url_citation" &&
+                    annotation?.url,
+                )
+                .map((annotation: any) => ({
+                  title:
+                    typeof annotation.title === "string"
+                      ? annotation.title
+                      : annotation.url,
+                  url: annotation.url,
+                  startIndex:
+                    typeof annotation.start_index === "number"
+                      ? annotation.start_index
+                      : undefined,
+                  endIndex:
+                    typeof annotation.end_index === "number"
+                      ? annotation.end_index
+                      : undefined,
+                }));
+
+              if (citations.length) {
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({
+                      type: "citations",
+                      citations,
+                    })}\n\n`,
+                  ),
+                );
+              }
+            }
+
+            if (
               item.event_type === "interaction.completed" &&
               item.interaction?.id
             ) {
