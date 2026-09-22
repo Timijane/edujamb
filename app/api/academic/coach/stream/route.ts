@@ -260,6 +260,11 @@ The retrieval context is supporting academic evidence. Use it when relevant, but
       async start(controller) {
         try {
           for await (const event of stream) {
+            console.log(
+              "[AI COACH][GEMINI EVENT]",
+              JSON.stringify(event),
+            );
+
             const item = event as {
               event_type?: string;
               delta?: {
