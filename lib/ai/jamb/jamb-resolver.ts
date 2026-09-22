@@ -9,6 +9,9 @@ export type JambIntent =
   | "mock_exam"
   | "study_plan"
   | "performance"
+  | "mistake_analysis"
+  | "revision"
+  | "recommendations"
   | "general";
 
 export type JambResolvedContext = {
@@ -69,7 +72,25 @@ function detectIntent(query: string): JambIntent {
   }
 
   if (
-    /\b(performance|my score|my result|weak|weakness|analytics)\b/.test(text)
+    /\b(mistake|mistakes|wrong answers|wrong answer|analyze my mistakes|explain my mistakes)\b/.test(text)
+  ) {
+    return "mistake_analysis";
+  }
+
+  if (
+    /\b(revision|revise|revision plan|what should i revise)\b/.test(text)
+  ) {
+    return "revision";
+  }
+
+  if (
+    /\b(recommend|recommendation|recommendations|what should i do next|next step|personalized|personalised|focus on next)\b/.test(text)
+  ) {
+    return "recommendations";
+  }
+
+  if (
+    /\b(performance|my score|my scores|my result|my results|weak|weakness|analytics|strengths)\b/.test(text)
   ) {
     return "performance";
   }

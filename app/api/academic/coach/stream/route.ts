@@ -5,6 +5,7 @@ import { streamWithGemini } from "@/lib/ai/gemini-provider";
 import { retrieveStudentJambKnowledge } from "@/lib/ai/jamb/jamb-retrieval";
 import { resolveJambQuery } from "@/lib/ai/jamb/jamb-resolver";
 import { retrieveJambResources } from "@/lib/ai/jamb/jamb-resources";
+import { buildCoachFeatureContext } from "@/lib/ai/jamb/jamb-coach-features";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -146,6 +147,11 @@ export async function POST(request: Request) {
       limit: 6,
     });
 
+    const coachFeature = await buildCoachFeatureContext(
+      token.uid,
+      message,
+    );
+
     const systemPrompt = `
 You are JAMBMASTER AI Coach, a professional AI tutor built specifically for Nigerian students preparing for JAMB.
 
@@ -228,7 +234,14 @@ The retrieval context is supporting academic evidence. Use it when relevant, but
     const stream = await streamWithGemini(
       {
         systemPrompt,
-        userPrompt: message,
+        userPrompt: [
+          message,
+          `COACH FEATURE: ${coachFeature.feature}`,
+          "FEATURE INSTRUCTIONS:",
+          coachFeature.instructions,
+          "STUDENT-SPECIFIC FEATURE CONTEXT:",
+          coachFeature.context,
+        ].join("\n\n"),
         maxTokens: 1200,
       },
       previousInteractionId,
