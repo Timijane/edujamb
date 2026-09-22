@@ -12,8 +12,9 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const token = await verifyBearerToken(request);
+    const db = getAdminDb();
 
-    const student = await getAdminDb()
+    const student = await db
       .collection("students")
       .doc(token.uid)
       .get();
@@ -32,10 +33,15 @@ export async function POST(request: Request) {
 
     const message = String(body.message || "").trim();
 
-    const previousInteractionId =
+    const conversationId =
+      typeof body.conversationId === "string"
+        ? body.conversationId.trim()
+        : "";
+
+    const clientPreviousInteractionId =
       typeof body.previousInteractionId === "string"
-        ? body.previousInteractionId
-        : undefined;
+        ? body.previousInteractionId.trim()
+        : "";
 
     if (!message) {
       return new Response(
@@ -57,6 +63,67 @@ export async function POST(request: Request) {
       );
     }
 
+    let conversationRef:
+      | FirebaseFirestore.DocumentReference
+      | null = null;
+
+    let storedInteractionId = "";
+
+    if (conversationId) {
+      conversationRef = db
+        .collection("aiCoachConversations")
+        .doc(conversationId);
+
+      const conversationSnapshot = await conversationRef.get();
+
+      if (!conversationSnapshot.exists) {
+        return new Response(
+          JSON.stringify({ error: "Conversation not found." }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      const conversationData = conversationSnapshot.data() || {};
+
+      if (conversationData.userId !== token.uid) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized." }),
+          {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      storedInteractionId =
+        typeof conversationData.interactionId === "string"
+          ? conversationData.interactionId
+          : "";
+
+      await conversationRef.collection("messages").add({
+        role: "user",
+        content: message,
+        citations: [],
+        createdAt: new Date(),
+        interactionId:
+          storedInteractionId ||
+          clientPreviousInteractionId ||
+          null,
+      });
+
+      await conversationRef.update({
+        lastMessage: message.slice(0, 200),
+        lastRole: "user",
+        updatedAt: new Date(),
+      });
+    }
+
+    const previousInteractionId =
+      clientPreviousInteractionId || storedInteractionId || undefined;
+
     const analytics = await getAcademicAnalytics(token.uid);
     const studentData = student.data() || {};
 
@@ -64,12 +131,6 @@ export async function POST(request: Request) {
       ? studentData.subjects
       : [];
 
-    /*
-     * Retrieve relevant JAMBMASTER academic knowledge.
-     *
-     * This is intentionally server-side. Gemini never receives the
-     * entire Firestore database; it receives only the relevant context.
-     */
     const resolvedJambQuery = await resolveJambQuery(message);
 
     const jambKnowledge = await retrieveStudentJambKnowledge(token.uid, {
@@ -78,7 +139,7 @@ export async function POST(request: Request) {
       topicId: resolvedJambQuery.topicId,
       limit: 8,
     });
-    
+
     const jambResources = await retrieveJambResources(message, {
       subjectId: resolvedJambQuery.subjectId,
       topicId: resolvedJambQuery.topicId,
@@ -93,38 +154,32 @@ Help the student understand JAMB subjects, topics, questions, explanations, exam
 
 TEACHING METHOD:
 - Act as a patient JAMB tutor, not merely a question-answering chatbot.
-- When the student asks to learn a topic, first identify the concept and explain the foundation in very simple language.
-- Prefer clear everyday examples before introducing complicated terminology.
+- When the student asks to learn a topic, identify the concept and explain the foundation in very simple language.
+- Prefer clear everyday examples before complicated terminology.
 - Break difficult concepts into small logical steps.
-- After explaining an important concept, give a worked example when appropriate.
+- Give worked examples when appropriate.
 - Check understanding with a short question or mini-practice task when appropriate.
-- When the student answers a practice question, evaluate the answer, explain why it is correct or incorrect, and teach the underlying concept.
-- If the student understands the basics, gradually increase the difficulty toward JAMB-style questions.
-- When the student is struggling, simplify the explanation rather than simply repeating the same wording.
-- Connect related concepts when that improves understanding, but stay focused on the student's actual question.
-- For exam preparation, distinguish between learning the concept and applying it under timed JAMB conditions.
-- Do not turn every response into a quiz; use judgment based on the student's request and conversation context.
+- When the student answers a practice question, evaluate the answer and explain the underlying concept.
+- Gradually increase difficulty toward JAMB-style questions.
+- When the student struggles, simplify rather than repeating the same wording.
+- Do not turn every response into a quiz.
+- Keep responses structured and mobile-friendly.
 
 RULES:
-- Give accurate, educational, exam-focused answers.
+- Give accurate educational exam-focused answers.
 - Explain reasoning, not just answers.
-- Never invent JAMB syllabus facts, dates, policies, or admission requirements.
+- Never invent JAMB syllabus facts, dates, policies or admission requirements.
 - If information may have changed, clearly state that it requires current verification.
 - Use the student's performance when relevant.
 - For calculations, show clear steps.
 - For multiple-choice questions, explain the correct answer and useful elimination reasoning.
-- Keep responses structured and mobile-friendly.
-- Avoid unnecessary filler.
 - Recommend practical JAMBMASTER study actions when appropriate.
-- When relevant JAMBMASTER academic context is provided below, use it as a trusted source.
-- Treat approved JAMBMASTER textbook/resource material as the primary teaching reference when it directly covers the student's requested topic.
-- Explain the retrieved material in simple language without changing its academic meaning.
-- You may combine retrieved JAMBMASTER resources with the student's academic records, performance data and retrieved questions when useful.
-- Do not invent information that is absent from the retrieved academic context.
-- If the retrieved resource material conflicts with a clearly established academic fact, explain the conflict rather than silently presenting both as equally authoritative.
-- Do not claim that a retrieved question is an official JAMB question unless its category/year identifies it as such.
+- Use retrieved JAMBMASTER academic context when relevant.
+- Treat approved JAMBMASTER textbook/resource material as the primary teaching reference when it directly covers the requested topic.
+- Explain retrieved material simply without changing its academic meaning.
+- Do not invent information absent from the retrieved academic context.
+- Do not claim a question is an official JAMB question unless its category/year establishes that.
 - Do not fabricate question IDs, topics, years, explanations or database records.
-- If the retrieved context does not contain enough information to answer a database-specific question, say so instead of inventing it.
 
 STUDENT PROFILE:
 ${JSON.stringify({
@@ -181,6 +236,13 @@ The retrieval context is supporting academic evidence. Use it when relevant, but
 
     const encoder = new TextEncoder();
 
+    const outputParts: string[] = [];
+
+    const collectedCitations: Array<{
+      title: string;
+      url: string;
+    }> = [];
+
     const readable = new ReadableStream({
       async start(controller) {
         try {
@@ -194,6 +256,17 @@ The retrieval context is supporting academic evidence. Use it when relevant, but
               interaction?: {
                 id?: string;
               };
+              step?: {
+                content?: Array<{
+                  annotations?: Array<{
+                    type?: string;
+                    title?: string;
+                    url?: string;
+                    start_index?: number;
+                    end_index?: number;
+                  }>;
+                }>;
+              };
             };
 
             if (
@@ -201,6 +274,8 @@ The retrieval context is supporting academic evidence. Use it when relevant, but
               item.delta?.type === "text" &&
               typeof item.delta.text === "string"
             ) {
+              outputParts.push(item.delta.text);
+
               controller.enqueue(
                 encoder.encode(
                   `data: ${JSON.stringify({
@@ -213,34 +288,36 @@ The retrieval context is supporting academic evidence. Use it when relevant, but
 
             if (
               item.event_type === "step.completed" &&
-              Array.isArray((item as any).step?.content)
+              Array.isArray(item.step?.content)
             ) {
-              const citations = (item as any).step.content
-                .flatMap((content: any) =>
+              const citations = item.step.content
+                .flatMap((content) =>
                   Array.isArray(content?.annotations)
                     ? content.annotations
                     : [],
                 )
                 .filter(
-                  (annotation: any) =>
+                  (annotation) =>
                     annotation?.type === "url_citation" &&
-                    annotation?.url,
+                    typeof annotation.url === "string",
                 )
-                .map((annotation: any) => ({
+                .map((annotation) => ({
                   title:
                     typeof annotation.title === "string"
                       ? annotation.title
-                      : annotation.url,
-                  url: annotation.url,
-                  startIndex:
-                    typeof annotation.start_index === "number"
-                      ? annotation.start_index
-                      : undefined,
-                  endIndex:
-                    typeof annotation.end_index === "number"
-                      ? annotation.end_index
-                      : undefined,
+                      : annotation.url || "Source",
+                  url: annotation.url as string,
                 }));
+
+              for (const citation of citations) {
+                if (
+                  !collectedCitations.some(
+                    (existing) => existing.url === citation.url,
+                  )
+                ) {
+                  collectedCitations.push(citation);
+                }
+              }
 
               if (citations.length) {
                 controller.enqueue(
@@ -258,28 +335,70 @@ The retrieval context is supporting academic evidence. Use it when relevant, but
               item.event_type === "interaction.completed" &&
               item.interaction?.id
             ) {
+              const interactionId = item.interaction.id;
+              const assistantContent = outputParts.join("").trim();
+
+              if (conversationRef) {
+                await conversationRef.collection("messages").add({
+                  role: "assistant",
+                  content: assistantContent,
+                  citations: collectedCitations,
+                  createdAt: new Date(),
+                  interactionId,
+                });
+
+                const conversationSnapshot =
+                  await conversationRef.get();
+
+                const conversationData =
+                  conversationSnapshot.data() || {};
+
+                const currentTitle =
+                  typeof conversationData.title === "string"
+                    ? conversationData.title
+                    : "New conversation";
+
+                const title =
+                  currentTitle === "New conversation"
+                    ? message.slice(0, 60) || "New conversation"
+                    : currentTitle;
+
+                await conversationRef.update({
+                  title,
+                  interactionId,
+                  lastMessage: assistantContent.slice(0, 200),
+                  lastRole: "assistant",
+                  updatedAt: new Date(),
+                });
+              }
+
               controller.enqueue(
                 encoder.encode(
                   `data: ${JSON.stringify({
                     type: "complete",
-                    interactionId: item.interaction.id,
+                    interactionId,
                   })}\n\n`,
                 ),
               );
             }
           }
 
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.enqueue(
+            encoder.encode("data: [DONE]\n\n"),
+          );
+
           controller.close();
         } catch (error) {
+          console.error("Coach stream error:", error);
+
           controller.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({
                 type: "error",
-                error:
+                message:
                   error instanceof Error
                     ? error.message
-                    : "AI stream failed.",
+                    : "AI Coach stream failed.",
               })}\n\n`,
             ),
           );
@@ -294,19 +413,20 @@ The retrieval context is supporting academic evidence. Use it when relevant, but
         "Content-Type": "text/event-stream; charset=utf-8",
         "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
-        "X-Accel-Buffering": "no",
       },
     });
   } catch (error) {
+    console.error("Coach stream request error:", error);
+
     return new Response(
       JSON.stringify({
         error:
           error instanceof Error
             ? error.message
-            : "Unable to process Coach request.",
+            : "Unable to start AI Coach.",
       }),
       {
-        status: 400,
+        status: 500,
         headers: { "Content-Type": "application/json" },
       },
     );
