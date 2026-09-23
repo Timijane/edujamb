@@ -49,12 +49,7 @@ export async function GET(request: Request) {
     console.error("[ACADEMIC SUBJECTS]", error);
 
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : String(error),
-      },
+      { error: "Unable to load academic subjects." },
       { status: 500 }
     );
   }

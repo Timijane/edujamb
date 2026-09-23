@@ -121,16 +121,11 @@ export default function ResourcesPage() {
 
     const data = await response.json();
 
-    console.log("[ACADEMIC SUBJECTS CLIENT]", data);
-
     if (!response.ok) {
-      throw new Error(
-        `ACADEMIC SUBJECTS API ${response.status}: ${data.error || JSON.stringify(data)}`
-      );
+      throw new Error(data.error || "Unable to load academic subjects.");
     }
 
     setAcademicSubjects(data.subjects || []);
-    alert(JSON.stringify(data.subjects || [], null, 2));
   }
 
   async function loadResources() {
