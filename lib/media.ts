@@ -29,6 +29,9 @@ export type MediaPurpose =
   | "community"
   | "mission"
   | "login_background"
+  | "academic_library_hero"
+  | "academic_resource_cover"
+  | "academic_subject_image"
   | "other";
 
 export type MediaItem = {
@@ -122,6 +125,21 @@ export const MEDIA_PURPOSES: {
     value: "login_background",
     label: "Login Background",
     description: "Artistic background image used on the shared login page.",
+  },
+  {
+    value: "academic_library_hero",
+    label: "Academic Library Hero",
+    description: "Hero image used only on the student Academic Library.",
+  },
+  {
+    value: "academic_resource_cover",
+    label: "Academic Resource Cover",
+    description: "Cover image used only for academic resources and textbooks.",
+  },
+  {
+    value: "academic_subject_image",
+    label: "Academic Subject Image",
+    description: "Image used only for academic subject presentation.",
   },
   {
     value: "other",
@@ -543,6 +561,72 @@ async function removeMediaAssignment(
       },
       { merge: true }
     );
+  }
+}
+
+/**
+ * Assign media to an academic location.
+ *
+ * IMPORTANT:
+ * This function is intentionally separate from
+ * assignMediaToHomepage(). It must never modify
+ * homepage/site media settings.
+ */
+export async function assignMediaToAcademic(
+  media: MediaItem,
+  options?: {
+    resourceId?: string;
+    subjectId?: string;
+  }
+) {
+  if (media.purpose === "academic_resource_cover") {
+    if (!options?.resourceId) {
+      throw new Error("resourceId is required for academic resource covers.");
+    }
+
+    await setDoc(
+      doc(db, "academicResources", options.resourceId),
+      {
+        coverImage: media.url,
+        coverMediaId: media.id,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return;
+  }
+
+  if (media.purpose === "academic_library_hero") {
+    await setDoc(
+      doc(db, "academicLibrarySettings", "main"),
+      {
+        heroImage: media.url,
+        heroImageMediaId: media.id,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return;
+  }
+
+  if (media.purpose === "academic_subject_image") {
+    if (!options?.subjectId) {
+      throw new Error("subjectId is required for academic subject images.");
+    }
+
+    await setDoc(
+      doc(db, "academicSubjects", options.subjectId),
+      {
+        image: media.url,
+        imageMediaId: media.id,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return;
   }
 }
 

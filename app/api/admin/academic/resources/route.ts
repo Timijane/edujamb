@@ -45,6 +45,8 @@ export async function GET(request: Request) {
         resourceType: data.resourceType || "other",
         subjectId: data.subjectId || "",
         topicId: data.topicId || "",
+        coverImage: data.coverImage || "",
+        coverMediaId: data.coverMediaId || "",
         sourceImportId: data.sourceImportId || "",
         chunkCount:
           typeof data.chunkCount === "number"
@@ -95,6 +97,8 @@ export async function PATCH(request: Request) {
         "unpublish",
         "activate",
         "deactivate",
+        "set-cover",
+        "remove-cover",
       ].includes(action)
     ) {
       return NextResponse.json(
@@ -112,6 +116,65 @@ export async function PATCH(request: Request) {
         { error: "Academic resource was not found." },
         { status: 404 },
       );
+    }
+
+    if (action === "remove-cover") {
+      await ref.update({
+        coverImage: "",
+        coverMediaId: "",
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: token.uid,
+      });
+
+      return NextResponse.json({
+        success: true,
+        resourceId,
+        action,
+      });
+    }
+
+    if (action === "set-cover") {
+      const mediaId = String(body.mediaId || "").trim();
+
+      if (!mediaId) {
+        return NextResponse.json(
+          { error: "Media ID is required for a resource cover." },
+          { status: 400 },
+        );
+      }
+
+      const mediaSnapshot = await db.collection("media").doc(mediaId).get();
+
+      if (!mediaSnapshot.exists) {
+        return NextResponse.json(
+          { error: "Selected media was not found." },
+          { status: 404 },
+        );
+      }
+
+      const mediaData = mediaSnapshot.data() || {};
+
+      if (mediaData.purpose !== "academic_resource_cover") {
+        return NextResponse.json(
+          { error: "Selected media is not an academic resource cover." },
+          { status: 400 },
+        );
+      }
+
+      await ref.update({
+        coverImage: mediaData.url || "",
+        coverMediaId: mediaId,
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: token.uid,
+      });
+
+      return NextResponse.json({
+        success: true,
+        resourceId,
+        action,
+        coverImage: mediaData.url || "",
+        coverMediaId: mediaId,
+      });
     }
 
     const updates: Record<string, unknown> = {

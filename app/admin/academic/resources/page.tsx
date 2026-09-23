@@ -1,6 +1,11 @@
 "use client";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
+import {
+  assignMediaToAcademic,
+  getMediaItems,
+  type MediaItem,
+} from "@/lib/media";
 
 type Resource = {
   id: string;
@@ -10,6 +15,8 @@ type Resource = {
   resourceType: string;
   subjectId: string;
   topicId: string;
+  coverImage?: string;
+  coverMediaId?: string;
   sourceImportId: string;
   chunkCount: number;
   active: boolean;
@@ -65,6 +72,7 @@ async function api(
 
 export default function AcademicResourcesPage() {
   const [resources, setResources] = useState<Resource[]>([]);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedSubject, setSelectedSubject] = useState("");
@@ -78,17 +86,25 @@ export default function AcademicResourcesPage() {
     setMessage("");
 
     try {
-      const [resourceData, subjectData] = await Promise.all([
+      const [resourceData, subjectData, mediaData] = await Promise.all([
         api("/api/admin/academic/resources"),
         api("/api/admin/academic/subjects"),
+        getMediaItems(),
       ]);
 
       setResources(resourceData.resources || []);
+
       setSubjects(
         (subjectData.subjects || []).map((subject: any) => ({
           id: subject.id,
           name: subject.name,
         })),
+      );
+
+      setMediaItems(
+        mediaData.filter(
+          (media) => media.purpose === "academic_resource_cover",
+        ),
       );
     } catch (error) {
       setMessage(
@@ -176,6 +192,48 @@ export default function AcademicResourcesPage() {
         error instanceof Error
           ? error.message
           : "Unable to update resource.",
+      );
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function updateResourceCover(
+    resourceId: string,
+    mediaId: string,
+  ) {
+    setBusyId(resourceId);
+    setMessage("");
+
+    try {
+      if (!mediaId) {
+        await api("/api/admin/academic/resources", {
+          method: "PATCH",
+          body: JSON.stringify({
+            resourceId,
+            action: "remove-cover",
+          }),
+        });
+
+        setMessage("Resource cover removed.");
+      } else {
+        const media = mediaItems.find((item) => item.id === mediaId);
+
+        if (!media) {
+          throw new Error("Selected academic cover image was not found.");
+        }
+
+        await assignMediaToAcademic(media, { resourceId });
+
+        setMessage("Resource cover updated.");
+      }
+
+      await load();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to update resource cover.",
       );
     } finally {
       setBusyId("");
@@ -391,6 +449,74 @@ export default function AcademicResourcesPage() {
                               : "Draft"}
                           </span>
                         </div>
+                      </div>
+
+                      <div className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 lg:max-w-sm">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-700">
+                              Academic Cover
+                            </p>
+                            <p className="mt-1 text-[11px] text-zinc-500">
+                              Use an uploaded academic cover image for this resource.
+                            </p>
+                          </div>
+
+                          {resource.coverImage && (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => updateResourceCover(resource.id, "")}
+                              className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+
+                        {resource.coverImage ? (
+                          <div className="mb-3 overflow-hidden rounded-lg border border-zinc-200 bg-white">
+                            <img
+                              src={resource.coverImage}
+                              alt={`${resource.title} cover`}
+                              className="h-28 w-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="mb-3 rounded-lg border border-dashed border-zinc-300 bg-white px-3 py-5 text-center">
+                            <p className="text-xs text-zinc-500">
+                              No cover image assigned.
+                            </p>
+                          </div>
+                        )}
+
+                        <select
+                          value=""
+                          disabled={busy || mediaItems.length === 0}
+                          onChange={(event) => {
+                            if (event.target.value) {
+                              updateResourceCover(
+                                resource.id,
+                                event.target.value,
+                              );
+                            }
+                          }}
+                          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs outline-none focus:border-zinc-500 disabled:bg-zinc-100"
+                        >
+                          <option value="">
+                            {mediaItems.length === 0
+                              ? "No academic cover images uploaded"
+                              : resource.coverImage
+                                ? "Change cover image..."
+                                : "Select cover image..."}
+                          </option>
+
+                          {mediaItems.map((media) => (
+                            <option key={media.id} value={media.id}>
+                              {media.fileName}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
                       <div className="flex flex-wrap gap-2 lg:max-w-sm lg:justify-end">
