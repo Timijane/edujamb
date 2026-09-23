@@ -217,17 +217,8 @@ export default function ResourcesPage() {
   }, []);
 
   const subjects = useMemo(
-    () =>
-      academicSubjects.length > 0
-        ? academicSubjects.map((subject) => subject.code)
-        : Array.from(
-            new Set(
-              resources
-                .map((resource) => resource.subjectId)
-                .filter(Boolean),
-            ),
-          ),
-    [academicSubjects, resources],
+    () => academicSubjects.map((subject) => subject.code),
+    [academicSubjects],
   );
 
   const topics = useMemo(
