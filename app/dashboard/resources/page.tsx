@@ -128,6 +128,7 @@ export default function ResourcesPage() {
     }
 
     setAcademicSubjects(data.subjects || []);
+    alert(JSON.stringify(data.subjects || [], null, 2));
   }
 
   async function loadResources() {
