@@ -11,6 +11,8 @@ type Resource = {
   resourceType: string;
   subjectId: string;
   topicId: string;
+  coverImage?: string;
+  coverMediaId?: string;
   chunkCount: number;
   createdAt?: unknown;
   updatedAt?: unknown;
@@ -531,22 +533,27 @@ export default function ResourcesPage() {
                       key={resource.id}
                       className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl"
                     >
-                      <div
-                        className={`relative h-32 ${style.bg} p-5`}
-                      >
-                        <div
-                          className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-sm font-black shadow-sm ${style.text}`}
-                        >
-                          {style.icon}
-                        </div>
+                      <div className="relative h-32 overflow-hidden bg-slate-100">
+                        {resource.coverImage ? (
+                          <img
+                            src={resource.coverImage}
+                            alt={`${resource.title} cover`}
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className={`h-full ${style.bg} p-5`}>
+                            <div
+                              className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-sm font-black shadow-sm ${style.text}`}
+                            >
+                              {style.icon}
+                            </div>
+                          </div>
+                        )}
 
-                        <div className="absolute bottom-4 right-4 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-slate-600 backdrop-blur">
-                          {resourceTypeName(
-                            resource.resourceType,
-                          )}
+                        <div className="absolute bottom-4 right-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-600 shadow-sm backdrop-blur">
+                          {resourceTypeName(resource.resourceType)}
                         </div>
                       </div>
-
                       <div className="p-5">
                         <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                           {subjectName(

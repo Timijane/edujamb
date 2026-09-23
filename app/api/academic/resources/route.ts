@@ -42,6 +42,8 @@ export async function GET(request: Request) {
         resourceType: data.resourceType || "other",
         subjectId: data.subjectId || "",
         topicId: data.topicId || "",
+        coverImage: data.coverImage || "",
+        coverMediaId: data.coverMediaId || "",
         chunkCount:
           typeof data.chunkCount === "number"
             ? data.chunkCount
