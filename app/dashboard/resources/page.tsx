@@ -121,6 +121,8 @@ export default function ResourcesPage() {
 
     const data = await response.json();
 
+    console.log("[ACADEMIC SUBJECTS CLIENT]", data);
+
     if (!response.ok) {
       throw new Error(data.error || "Unable to load academic subjects.");
     }
