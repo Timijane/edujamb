@@ -1,5 +1,5 @@
 "use client";
-
+import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useState } from "react";
 
 type Resource = {
@@ -131,8 +131,27 @@ export default function AcademicResourcesPage() {
   }
 
   useEffect(() => {
-    load();
-  }, []);
+  let unsubscribe: (() => void) | undefined;
+
+  const initAuth = async () => {
+    const { auth } = await import("@/lib/firebase");
+
+    unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        load();
+      } else {
+        setMessage("You must be signed in.");
+        setLoading(false);
+      }
+    });
+  };
+
+  initAuth();
+
+  return () => {
+    unsubscribe?.();
+  };
+}, []);
 
   async function updateResource(
     resourceId: string,
