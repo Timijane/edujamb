@@ -76,6 +76,11 @@ export async function GET(request: Request) {
         slug: subject.slug,
         code: subject.code,
         description: subject.description || "",
+        image: typeof subject.image === "string" ? subject.image : "",
+        imageMediaId:
+          typeof subject.imageMediaId === "string"
+            ? subject.imageMediaId
+            : "",
         topics,
       });
     }

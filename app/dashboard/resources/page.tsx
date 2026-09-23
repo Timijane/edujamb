@@ -113,7 +113,7 @@ export default function ResourcesPage() {
   async function loadAcademicSubjects() {
     const token = await getIdToken();
 
-    const response = await fetch("/api/academic/subjects", {
+    const response = await fetch("/api/student/subjects", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
