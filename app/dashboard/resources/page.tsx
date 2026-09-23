@@ -124,7 +124,9 @@ export default function ResourcesPage() {
     console.log("[ACADEMIC SUBJECTS CLIENT]", data);
 
     if (!response.ok) {
-      throw new Error(data.error || "Unable to load academic subjects.");
+      throw new Error(
+        `ACADEMIC SUBJECTS API ${response.status}: ${data.error || JSON.stringify(data)}`
+      );
     }
 
     setAcademicSubjects(data.subjects || []);
