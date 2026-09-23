@@ -61,7 +61,9 @@ function splitLongParagraph(
 
   if (!chunks.length) {
     for (let start = 0; start < paragraph.length; start += maxLength) {
-      chunks.push(paragraph.slice(start, start + maxLength).trim());
+      chunks.push(
+        paragraph.slice(start, start + maxLength).trim(),
+      );
     }
   }
 
@@ -88,7 +90,6 @@ export function chunkAcademicText(
   );
 
   const paragraphs = splitIntoParagraphs(text);
-
   const pieces: string[] = [];
 
   for (const paragraph of paragraphs) {
@@ -97,6 +98,25 @@ export function chunkAcademicText(
 
   const chunks: JambResourceChunkInput[] = [];
   let current = "";
+
+  const makeChunk = (
+    id: string,
+    content: string,
+  ): JambResourceChunkInput => {
+    const chunk: JambResourceChunkInput = {
+      id,
+      title:
+        options.title ||
+        `Resource section ${chunks.length + 1}`,
+      text: content,
+    };
+
+    if (options.chapter) {
+      chunk.chapter = options.chapter;
+    }
+
+    return chunk;
+  };
 
   for (const piece of pieces) {
     if (!current) {
@@ -109,12 +129,12 @@ export function chunkAcademicText(
       continue;
     }
 
-    chunks.push({
-      id: `chunk-${chunks.length + 1}`,
-      title: options.title || `Resource section ${chunks.length + 1}`,
-      text: current.trim(),
-      chapter: options.chapter,
-    });
+    chunks.push(
+      makeChunk(
+        `chunk-${chunks.length + 1}`,
+        current.trim(),
+      ),
+    );
 
     const tail = current.slice(
       Math.max(0, current.length - overlap),
@@ -125,12 +145,12 @@ export function chunkAcademicText(
     if (current.length > chunkSize) {
       const forced = current.slice(0, chunkSize).trim();
 
-      chunks.push({
-        id: `chunk-${chunks.length + 1}`,
-        title: options.title || `Resource section ${chunks.length + 1}`,
-        text: forced,
-        chapter: options.chapter,
-      });
+      chunks.push(
+        makeChunk(
+          `chunk-${chunks.length + 1}`,
+          forced,
+        ),
+      );
 
       current = current.slice(
         Math.max(0, chunkSize - overlap),
@@ -139,12 +159,12 @@ export function chunkAcademicText(
   }
 
   if (current.trim()) {
-    chunks.push({
-      id: `chunk-${chunks.length + 1}`,
-      title: options.title || `Resource section ${chunks.length + 1}`,
-      text: current.trim(),
-      chapter: options.chapter,
-    });
+    chunks.push(
+      makeChunk(
+        `chunk-${chunks.length + 1}`,
+        current.trim(),
+      ),
+    );
   }
 
   return chunks;
