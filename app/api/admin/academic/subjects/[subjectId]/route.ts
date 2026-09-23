@@ -25,7 +25,7 @@ export async function PATCH(
     const { subjectId } = await params;
 
     const body = await request.json();
-    const allowed = ["name", "description", "code", "active", "published", "order"];
+    const allowed = ["name", "description", "code", "active", "published", "order", "image", "imageMediaId"];
 
     const updates: Record<string, unknown> = {};
 

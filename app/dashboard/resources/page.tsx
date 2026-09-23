@@ -18,6 +18,15 @@ type Resource = {
   updatedAt?: unknown;
 };
 
+type AcademicSubject = {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  image?: string;
+  imageMediaId?: string;
+};
+
 const subjectStyles: Record<
   string,
   { bg: string; text: string; icon: string }
@@ -80,8 +89,11 @@ function getSubjectStyle(id: string) {
 
 export default function ResourcesPage() {
   const [resources, setResources] = useState<Resource[]>([]);
+  const [academicSubjects, setAcademicSubjects] = useState<AcademicSubject[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [heroImage, setHeroImage] = useState("");
+  const [heroOverlay, setHeroOverlay] = useState(38);
   const [search, setSearch] = useState("");
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [topicFilter, setTopicFilter] = useState("all");
@@ -96,6 +108,24 @@ export default function ResourcesPage() {
     }
 
     return user.getIdToken();
+  }
+
+  async function loadAcademicSubjects() {
+    const token = await getIdToken();
+
+    const response = await fetch("/api/academic/subjects", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to load academic subjects.");
+    }
+
+    setAcademicSubjects(data.subjects || []);
   }
 
   async function loadResources() {
@@ -122,6 +152,26 @@ export default function ResourcesPage() {
       setResources(
         Array.isArray(data.resources) ? data.resources : [],
       );
+
+      const settingsResponse = await fetch(
+        "/api/academic/library-settings",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const settingsData = await settingsResponse.json();
+
+      if (settingsResponse.ok) {
+        setHeroImage(settingsData.heroImage || "");
+        setHeroOverlay(
+          typeof settingsData.heroOverlay === "number"
+            ? settingsData.heroOverlay
+            : 38,
+        );
+      }
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -141,7 +191,17 @@ export default function ResourcesPage() {
 
       unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
-          loadResources();
+          Promise.all([
+            loadResources(),
+            loadAcademicSubjects(),
+          ]).catch((error) => {
+            setMessage(
+              error instanceof Error
+                ? error.message
+                : "Unable to load academic library."
+            );
+            setLoading(false);
+          });
         } else {
           setMessage("You must be signed in.");
           setLoading(false);
@@ -158,14 +218,16 @@ export default function ResourcesPage() {
 
   const subjects = useMemo(
     () =>
-      Array.from(
-        new Set(
-          resources
-            .map((resource) => resource.subjectId)
-            .filter(Boolean),
-        ),
-      ),
-    [resources],
+      academicSubjects.length > 0
+        ? academicSubjects.map((subject) => subject.code)
+        : Array.from(
+            new Set(
+              resources
+                .map((resource) => resource.subjectId)
+                .filter(Boolean),
+            ),
+          ),
+    [academicSubjects, resources],
   );
 
   const topics = useMemo(
@@ -218,9 +280,24 @@ export default function ResourcesPage() {
     <main className="min-h-screen bg-[#f7f8fc] text-slate-900">
       <div className="mx-auto max-w-7xl px-4 pb-12 pt-5 sm:px-6 lg:px-8">
         {/* Hero */}
-        <section className="relative overflow-hidden rounded-[28px] bg-slate-950 px-6 py-8 text-white shadow-xl sm:px-10 sm:py-10">
-          <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
-          <div className="absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-violet-500/20 blur-3xl" />
+        <section
+          className="relative overflow-hidden rounded-[28px] bg-slate-950 px-6 py-8 text-white shadow-xl sm:px-10 sm:py-10"
+          style={
+            heroImage
+              ? {
+                  backgroundImage: `linear-gradient(rgba(2,6,23,${heroOverlay / 100}), rgba(2,6,23,${heroOverlay / 100})), url(${heroImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : undefined
+          }
+        >
+          {!heroImage && (
+            <>
+              <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" />
+              <div className="absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-violet-500/20 blur-3xl" />
+            </>
+          )}
 
           <div className="relative max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 backdrop-blur">
@@ -322,6 +399,9 @@ export default function ResourcesPage() {
 
             {subjects.map((subject) => {
               const style = getSubjectStyle(subject);
+              const subjectData = academicSubjects.find(
+                (item) => item.code === subject
+              );
 
               return (
                 <button
@@ -336,18 +416,26 @@ export default function ResourcesPage() {
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <div
-                    className={`flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black ${
-                      subjectFilter === subject
-                        ? "bg-white/15 text-white"
-                        : `${style.bg} ${style.text}`
-                    }`}
-                  >
-                    {style.icon}
-                  </div>
+                  {subjectData?.image ? (
+                    <img
+                      src={subjectData.image}
+                      alt={subjectData.name}
+                      className="h-12 w-16 rounded-xl object-cover"
+                    />
+                  ) : (
+                    <div
+                      className={`flex h-9 w-9 items-center justify-center rounded-xl text-xs font-black ${
+                        subjectFilter === subject
+                          ? "bg-white/15 text-white"
+                          : `${style.bg} ${style.text}`
+                      }`}
+                    >
+                      {style.icon}
+                    </div>
+                  )}
 
                   <div className="mt-2 text-sm font-bold">
-                    {subjectName(subject)}
+                    {subjectData?.name || subjectName(subject)}
                   </div>
                 </button>
               );
