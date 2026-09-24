@@ -2,6 +2,7 @@
 
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Resource = {
   id: string;
@@ -88,6 +89,7 @@ function getSubjectStyle(id: string) {
 }
 
 export default function ResourcesPage() {
+  const router = useRouter();
   const [resources, setResources] = useState<Resource[]>([]);
   const [academicSubjects, setAcademicSubjects] = useState<AcademicSubject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -553,8 +555,8 @@ export default function ResourcesPage() {
                       <button
                         type="button"
                         onClick={() =>
-                          setMessage(
-                            "The resource reader will be connected in the next step.",
+                          router.push(
+                            `/dashboard/resources/${featuredResource.id}`,
                           )
                         }
                         className="mt-6 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-slate-800"
