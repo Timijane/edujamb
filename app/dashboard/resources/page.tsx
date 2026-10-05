@@ -660,8 +660,8 @@ export default function ResourcesPage() {
                           <button
                             type="button"
                             onClick={() =>
-                              setMessage(
-                                "The resource reader will be connected in the next step.",
+                              router.push(
+                                `/dashboard/resources/${resource.id}`,
                               )
                             }
                             className="rounded-xl bg-slate-950 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-slate-800"
