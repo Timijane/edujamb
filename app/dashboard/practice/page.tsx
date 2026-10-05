@@ -41,6 +41,34 @@ const MODE_TIMES: Record<Mode, number> = {
   mock: 60 * 60,
 };
 
+const MODE_DESCRIPTIONS: Record<Mode, string> = {
+  cbt: "Sharpen your skills with timed practice questions designed for regular revision.",
+  past_questions:
+    "Practice authentic JAMB-style questions by subject and examination year.",
+  mock: "Take a full-length practice examination and test your readiness under timed conditions.",
+};
+
+const MODE_META: Record<
+  Mode,
+  { questions: number; duration: string; label: string }
+> = {
+  cbt: {
+    questions: 20,
+    duration: "30 minutes",
+    label: "Quick practice",
+  },
+  past_questions: {
+    questions: 20,
+    duration: "30 minutes",
+    label: "JAMB revision",
+  },
+  mock: {
+    questions: 40,
+    duration: "60 minutes",
+    label: "Full simulation",
+  },
+};
+
 export default function PracticePage() {
   const [token, setToken] = useState("");
   const [mode, setMode] = useState<Mode>("cbt");
@@ -58,6 +86,7 @@ export default function PracticePage() {
   const [startedAt, setStartedAt] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [started, setStarted] = useState(false);
 
   const [result, setResult] = useState<{
     score: number;
@@ -98,14 +127,7 @@ export default function PracticePage() {
   }, []);
 
   useEffect(() => {
-    if (!token) return;
-    if (!subjectId) return;
-
-    loadQuestions();
-  }, [token, mode, subjectId, year]);
-
-  useEffect(() => {
-    if (!questions.length || submitted) return;
+    if (!questions.length || submitted || !started) return;
 
     const timer = window.setInterval(() => {
       setSeconds((value) => {
@@ -120,9 +142,14 @@ export default function PracticePage() {
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [questions.length, submitted]);
+  }, [questions.length, submitted, started]);
 
   async function loadQuestions() {
+    if (!token || !subjectId) {
+      setMessage("Please select a subject before starting.");
+      return;
+    }
+
     try {
       setLoading(true);
       setMessage("");
@@ -167,13 +194,25 @@ export default function PracticePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.error || "Unable to load questions.",
-        );
+        throw new Error(data.error || "Unable to load questions.");
       }
 
-      setQuestions(data.questions || []);
+      const loadedQuestions = data.questions || [];
+
+      if (!loadedQuestions.length) {
+        setStarted(false);
+        setQuestions([]);
+        setMessage(
+          "No published questions are available for this selection yet.",
+        );
+        return;
+      }
+
+      setQuestions(loadedQuestions);
+      setStarted(true);
     } catch (error) {
+      setStarted(false);
+      setQuestions([]);
       setMessage(
         error instanceof Error
           ? error.message
@@ -209,9 +248,7 @@ export default function PracticePage() {
         );
 
       if (!submittedAnswers.length) {
-        throw new Error(
-          "Answer at least one question before submitting.",
-        );
+        throw new Error("Answer at least one question before submitting.");
       }
 
       const response = await fetch("/api/academic/engine", {
@@ -233,9 +270,7 @@ export default function PracticePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.error || "Unable to submit attempt.",
-        );
+        throw new Error(data.error || "Unable to submit attempt.");
       }
 
       setResult(data.result);
@@ -258,6 +293,8 @@ export default function PracticePage() {
     setCurrent(0);
     setSubmitted(false);
     setResult(null);
+    setStarted(false);
+    setMessage("");
     setSeconds(MODE_TIMES[nextMode]);
 
     if (nextMode !== "past_questions") {
@@ -287,15 +324,20 @@ export default function PracticePage() {
             style={{
               maxWidth: 720,
               margin: "40px auto",
-              padding: 32,
+              padding: 40,
               textAlign: "center",
+              borderRadius: "var(--edu-radius-xl)",
+              boxShadow: "var(--edu-shadow-lg)",
             }}
           >
-            <p className="edu-text-secondary">
+            <p
+              className="edu-text-secondary"
+              style={{ marginBottom: 8 }}
+            >
               {MODE_LABELS[mode]}
             </p>
 
-            <h1>Practice Complete</h1>
+            <h1 style={{ marginTop: 0 }}>Practice Complete</h1>
 
             <div style={{ margin: "30px 0" }}>
               <strong style={{ fontSize: 52 }}>
@@ -308,12 +350,182 @@ export default function PracticePage() {
             </div>
 
             <button
-              className="edu-button"
-              onClick={loadQuestions}
+              className="edu-button edu-button-primary"
+              onClick={() => {
+                setStarted(false);
+                setSubmitted(false);
+                setResult(null);
+                setQuestions([]);
+              }}
             >
-              Practice Again
+              Back to Practice Centre
             </button>
           </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (started && question) {
+    return (
+      <main className="edu-app">
+        <div className="edu-content">
+          <div style={{ marginBottom: 20 }}>
+            <button
+              className="edu-button edu-button-secondary"
+              onClick={() => {
+                setStarted(false);
+                setQuestions([]);
+              }}
+            >
+              ← Exit Practice
+            </button>
+          </div>
+
+          <div
+            className="edu-surface"
+            style={{
+              padding: 20,
+              marginBottom: 16,
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 20,
+              flexWrap: "wrap",
+              borderRadius: "var(--edu-radius-lg)",
+            }}
+          >
+            <div>
+              <strong>
+                Question {current + 1} of {questions.length}
+              </strong>
+
+              <p
+                className="edu-text-secondary"
+                style={{ margin: "5px 0 0" }}
+              >
+                {answeredCount} answered
+              </p>
+            </div>
+
+            <strong>{formattedTime}</strong>
+          </div>
+
+          <div
+            className="edu-surface"
+            style={{
+              padding: 24,
+              marginBottom: 20,
+              borderRadius: "var(--edu-radius-lg)",
+            }}
+          >
+            <h2>{question.question}</h2>
+
+            <div style={{ marginTop: 24 }}>
+              {question.options.map((option, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() =>
+                    setAnswers((previous) => ({
+                      ...previous,
+                      [question.id]: index,
+                    }))
+                  }
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    padding: 16,
+                    marginBottom: 12,
+                    border:
+                      answers[question.id] === index
+                        ? "2px solid var(--edu-primary)"
+                        : "1px solid var(--edu-border)",
+                    borderRadius: "var(--edu-radius-md)",
+                    background:
+                      answers[question.id] === index
+                        ? "var(--edu-primary-soft)"
+                        : "var(--edu-surface)",
+                    color: "var(--edu-text)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <strong>{String.fromCharCode(65 + index)}.</strong>{" "}
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(42px, 1fr))",
+              gap: 8,
+              marginBottom: 20,
+            }}
+          >
+            {questions.map((item, index) => (
+              <button
+                key={item.id}
+                className={
+                  current === index
+                    ? "edu-button edu-button-primary"
+                    : "edu-button edu-button-secondary"
+                }
+                onClick={() => setCurrent(index)}
+                style={{ minHeight: 42 }}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <button
+              className="edu-button edu-button-secondary"
+              disabled={current === 0}
+              onClick={() => setCurrent((value) => value - 1)}
+            >
+              Previous
+            </button>
+
+            {current === questions.length - 1 ? (
+              <button
+                className="edu-button edu-button-primary"
+                onClick={submit}
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : "Submit Exam"}
+              </button>
+            ) : (
+              <button
+                className="edu-button edu-button-primary"
+                onClick={() => setCurrent((value) => value + 1)}
+              >
+                Next
+              </button>
+            )}
+          </div>
+
+          {message && (
+            <div
+              className="edu-surface"
+              style={{
+                padding: 16,
+                marginTop: 20,
+              }}
+            >
+              {message}
+            </div>
+          )}
         </div>
       </main>
     );
@@ -322,322 +534,315 @@ export default function PracticePage() {
   return (
     <main className="edu-app">
       <div className="edu-content">
-        <div style={{ marginBottom: 24 }}>
-          <h1>Practice Centre</h1>
-
-          <p className="edu-text-secondary">
-            Prepare with CBT practice, JAMB past questions and
-            mock examinations.
-          </p>
-        </div>
-
-        <div
-          className="edu-surface"
+        <section
           style={{
-            padding: 16,
-            marginBottom: 20,
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
+            padding: "12px 0 32px",
           }}
         >
-          {(Object.keys(MODE_LABELS) as Mode[]).map(
-            (item) => (
-              <button
-                key={item}
-                className="edu-button"
-                onClick={() => changeMode(item)}
-                style={{
-                  opacity: mode === item ? 1 : 0.55,
-                }}
-              >
-                {MODE_LABELS[item]}
-              </button>
-            ),
-          )}
-        </div>
+          <p
+            style={{
+              color: "var(--edu-primary)",
+              fontWeight: 700,
+              marginBottom: 8,
+            }}
+          >
+            PRACTICE CENTRE
+          </p>
 
-        <div
-          className="edu-surface"
+          <h1
+            style={{
+              fontSize: "clamp(30px, 5vw, 46px)",
+              margin: "0 0 12px",
+              letterSpacing: "-0.03em",
+            }}
+          >
+            Prepare. Practice. Perform.
+          </h1>
+
+          <p
+            className="edu-text-secondary"
+            style={{
+              maxWidth: 700,
+              fontSize: 17,
+              lineHeight: 1.7,
+              margin: 0,
+            }}
+          >
+            Build confidence with CBT practice, JAMB past questions
+            and realistic mock examinations.
+          </p>
+        </section>
+
+        <section
           style={{
-            padding: 16,
-            marginBottom: 20,
             display: "grid",
             gridTemplateColumns:
-              mode === "past_questions"
-                ? "1fr 1fr"
-                : "1fr",
-            gap: 12,
+              "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
+            gap: 18,
+            marginBottom: 28,
           }}
         >
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 6,
-                fontWeight: 600,
-              }}
-            >
-              Subject
-            </label>
+          {(Object.keys(MODE_LABELS) as Mode[]).map((item) => {
+            const selected = mode === item;
 
-            <select
-              value={subjectId}
-              onChange={(event) =>
-                setSubjectId(event.target.value)
-              }
-              style={{
-                width: "100%",
-                padding: 12,
-                borderRadius:
-                  "var(--edu-radius-md)",
-                border:
-                  "1px solid var(--edu-border)",
-                background:
-                  "var(--edu-surface)",
-              }}
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={() => changeMode(item)}
+                className="edu-surface"
+                style={{
+                  textAlign: "left",
+                  padding: 24,
+                  borderRadius: "var(--edu-radius-xl)",
+                  border: selected
+                    ? "2px solid var(--edu-primary)"
+                    : "1px solid var(--edu-border)",
+                  background: selected
+                    ? "var(--edu-primary-soft)"
+                    : "var(--edu-surface)",
+                  boxShadow: selected
+                    ? "var(--edu-shadow-md)"
+                    : "var(--edu-shadow-sm)",
+                  cursor: "pointer",
+                  transition: "all 160ms ease",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <div>
+                    <p
+                      style={{
+                        margin: "0 0 8px",
+                        color: "var(--edu-primary)",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                      }}
+                    >
+                      {MODE_META[item].label}
+                    </p>
+
+                    <h2 style={{ margin: 0 }}>
+                      {MODE_LABELS[item]}
+                    </h2>
+                  </div>
+
+                  {selected && (
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "var(--edu-primary)",
+                      }}
+                    >
+                      Selected
+                    </span>
+                  )}
+                </div>
+
+                <p
+                  className="edu-text-secondary"
+                  style={{
+                    lineHeight: 1.6,
+                    margin: "14px 0 20px",
+                  }}
+                >
+                  {MODE_DESCRIPTIONS[item]}
+                </p>
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 18,
+                    flexWrap: "wrap",
+                    fontSize: 14,
+                    color: "var(--edu-text-secondary)",
+                  }}
+                >
+                  <span>
+                    <strong>{MODE_META[item].questions}</strong>{" "}
+                    questions
+                  </span>
+
+                  <span>
+                    <strong>{MODE_META[item].duration}</strong>
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </section>
+
+        <section
+          className="edu-surface"
+          style={{
+            padding: 24,
+            borderRadius: "var(--edu-radius-xl)",
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ marginBottom: 22 }}>
+            <h2 style={{ margin: "0 0 6px" }}>
+              Set up your practice
+            </h2>
+
+            <p
+              className="edu-text-secondary"
+              style={{ margin: 0 }}
             >
-              {subjects.length === 0 ? (
-                <option value="">
-                  No subjects available
-                </option>
-              ) : (
-                subjects.map((subject) => (
-                  <option
-                    key={subject.id}
-                    value={subject.id}
-                  >
-                    {subject.name}
-                  </option>
-                ))
-              )}
-            </select>
+              Choose what you want to practise before starting.
+            </p>
           </div>
 
-          {mode === "past_questions" && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                mode === "past_questions"
+                  ? "repeat(auto-fit, minmax(240px, 1fr))"
+                  : "1fr",
+              gap: 18,
+            }}
+          >
             <div>
               <label
                 style={{
                   display: "block",
-                  marginBottom: 6,
-                  fontWeight: 600,
+                  marginBottom: 8,
+                  fontWeight: 700,
                 }}
               >
-                JAMB Year
+                Subject
               </label>
 
               <select
-                value={year}
-                onChange={(event) =>
-                  setYear(event.target.value)
-                }
+                value={subjectId}
+                onChange={(event) => setSubjectId(event.target.value)}
                 style={{
                   width: "100%",
-                  padding: 12,
-                  borderRadius:
-                    "var(--edu-radius-md)",
-                  border:
-                    "1px solid var(--edu-border)",
-                  background:
-                    "var(--edu-surface)",
+                  padding: "14px 15px",
+                  borderRadius: "var(--edu-radius-md)",
+                  border: "1px solid var(--edu-border)",
+                  background: "var(--edu-surface)",
+                  color: "var(--edu-text)",
+                  fontSize: 15,
                 }}
               >
-                <option value="">
-                  All available years
-                </option>
-
-                {Array.from(
-                  { length: 11 },
-                  (_, index) => 2026 - index,
-                ).map((item) => (
-                  <option
-                    key={item}
-                    value={item}
-                  >
-                    {item}
-                  </option>
-                ))}
+                {subjects.length === 0 ? (
+                  <option value="">No subjects available</option>
+                ) : (
+                  subjects.map((subject) => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
-          )}
-        </div>
+
+            {mode === "past_questions" && (
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: 8,
+                    fontWeight: 700,
+                  }}
+                >
+                  JAMB Year
+                </label>
+
+                <select
+                  value={year}
+                  onChange={(event) => setYear(event.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "14px 15px",
+                    borderRadius: "var(--edu-radius-md)",
+                    border: "1px solid var(--edu-border)",
+                    background: "var(--edu-surface)",
+                    color: "var(--edu-text)",
+                    fontSize: 15,
+                  }}
+                >
+                  <option value="">All available years</option>
+
+                  {Array.from(
+                    { length: 11 },
+                    (_, index) => 2026 - index,
+                  ).map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div
+            style={{
+              marginTop: 22,
+              padding: 16,
+              borderRadius: "var(--edu-radius-md)",
+              background: "var(--edu-surface-muted)",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 16,
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <strong>{MODE_LABELS[mode]}</strong>
+
+              <p
+                className="edu-text-secondary"
+                style={{ margin: "4px 0 0", fontSize: 14 }}
+              >
+                {MODE_META[mode].questions} questions ·{" "}
+                {MODE_META[mode].duration}
+              </p>
+            </div>
+
+            <button
+              className="edu-button edu-button-primary"
+              onClick={loadQuestions}
+              disabled={loading || !subjectId}
+              style={{
+                minWidth: 150,
+                minHeight: 48,
+              }}
+            >
+              {loading ? "Preparing..." : "Start Practice"}
+            </button>
+          </div>
+        </section>
 
         {message && (
           <div
             className="edu-surface"
             style={{
-              padding: 16,
-              marginBottom: 20,
+              padding: 20,
+              borderRadius: "var(--edu-radius-lg)",
+              border: "1px solid var(--edu-border)",
             }}
           >
-            {message}
-          </div>
-        )}
+            <strong style={{ display: "block", marginBottom: 6 }}>
+              Practice unavailable
+            </strong>
 
-        {loading && !question ? (
-          <div
-            className="edu-surface"
-            style={{ padding: 30 }}
-          >
-            Loading questions...
-          </div>
-        ) : question ? (
-          <>
-            <div
-              className="edu-surface"
-              style={{
-                padding: 20,
-                marginBottom: 16,
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 20,
-                flexWrap: "wrap",
-              }}
-            >
-              <div>
-                <strong>
-                  Question {current + 1} of{" "}
-                  {questions.length}
-                </strong>
-
-                <p
-                  className="edu-text-secondary"
-                  style={{ margin: "5px 0 0" }}
-                >
-                  {answeredCount} answered
-                </p>
-              </div>
-
-              <strong>{formattedTime}</strong>
-            </div>
-
-            <div
-              className="edu-surface"
-              style={{
-                padding: 24,
-                marginBottom: 20,
-              }}
-            >
-              <h2>{question.question}</h2>
-
-              <div style={{ marginTop: 24 }}>
-                {question.options.map(
-                  (option, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() =>
-                        setAnswers((previous) => ({
-                          ...previous,
-                          [question.id]: index,
-                        }))
-                      }
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        textAlign: "left",
-                        padding: 16,
-                        marginBottom: 12,
-                        border:
-                          "1px solid var(--edu-border)",
-                        borderRadius:
-                          "var(--edu-radius-md)",
-                        background:
-                          answers[question.id] === index
-                            ? "var(--edu-primary-soft)"
-                            : "var(--edu-surface)",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <strong>
-                        {String.fromCharCode(
-                          65 + index,
-                        )}
-                        .
-                      </strong>{" "}
-                      {option}
-                    </button>
-                  ),
-                )}
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit, minmax(42px, 1fr))",
-                gap: 8,
-                marginBottom: 20,
-              }}
-            >
-              {questions.map((item, index) => (
-                <button
-                  key={item.id}
-                  className="edu-button"
-                  onClick={() => setCurrent(index)}
-                  style={{
-                    opacity:
-                      current === index
-                        ? 1
-                        : 0.65,
-                    minHeight: 42,
-                  }}
-                >
-                  {index + 1}
-                </button>
-              ))}
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-              }}
-            >
-              <button
-                className="edu-button"
-                disabled={current === 0}
-                onClick={() =>
-                  setCurrent(
-                    (value) => value - 1,
-                  )
-                }
-              >
-                Previous
-              </button>
-
-              {current === questions.length - 1 ? (
-                <button
-                  className="edu-button"
-                  onClick={submit}
-                  disabled={loading}
-                >
-                  Submit Exam
-                </button>
-              ) : (
-                <button
-                  className="edu-button"
-                  onClick={() =>
-                    setCurrent(
-                      (value) => value + 1,
-                    )
-                  }
-                >
-                  Next
-                </button>
-              )}
-            </div>
-          </>
-        ) : (
-          <div
-            className="edu-surface"
-            style={{ padding: 30 }}
-          >
-            {subjectId
-              ? "No published questions are available for this selection yet."
-              : "Select one of your JAMB subjects to begin."}
+            <span className="edu-text-secondary">
+              {message}
+            </span>
           </div>
         )}
       </div>
