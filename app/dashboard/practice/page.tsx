@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
@@ -70,6 +71,7 @@ const MODE_META: Record<
 };
 
 export default function PracticePage() {
+  const router = useRouter();
   const [token, setToken] = useState("");
   const [mode, setMode] = useState<Mode>("cbt");
 
@@ -589,7 +591,14 @@ export default function PracticePage() {
               <button
                 key={item}
                 type="button"
-                onClick={() => changeMode(item)}
+                onClick={() => {
+                  if (item === "cbt") {
+                    router.push("/dashboard/practice/cbt");
+                    return;
+                  }
+
+                  changeMode(item);
+                }}
                 className="edu-surface"
                 style={{
                   textAlign: "left",
