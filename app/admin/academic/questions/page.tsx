@@ -337,6 +337,7 @@ export default function AdminQuestionsPage() {
         ...question,
         subjectId,
         topicId,
+        questionSetId: null,
         year: question.year || undefined,
         published: false,
       }),
