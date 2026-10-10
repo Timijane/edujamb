@@ -49,6 +49,22 @@ type QuestionDraft = {
   difficulty: QuestionDifficulty;
 };
 
+type ManagedQuestion = {
+  id: string;
+  subjectId: string;
+  topicId: string;
+  question: string;
+  options: string[];
+  correctOption: number;
+  explanation: string;
+  year: string | number | null;
+  category: string;
+  difficulty: string;
+  imageUrl: string;
+  active: boolean;
+  published: boolean;
+};
+
 const emptyQuestion = (): QuestionDraft => ({
   question: "",
   options: ["", "", "", ""],
@@ -64,6 +80,11 @@ export default function AdminQuestionsPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [sets, setSets] = useState<QuestionSet[]>([]);
+  const [managedQuestions, setManagedQuestions] = useState<
+    ManagedQuestion[]
+  >([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [questionActionId, setQuestionActionId] = useState("");
 
   const [mode, setMode] = useState<"single" | "set">("single");
 
@@ -146,6 +167,80 @@ export default function AdminQuestionsPage() {
     setSets(data.sets || []);
   }
 
+  async function loadManagedQuestions() {
+    setLoadingQuestions(true);
+
+    try {
+      const data = await api(
+        "/api/admin/academic/questions"
+      );
+
+      setManagedQuestions(data.questions || []);
+    } finally {
+      setLoadingQuestions(false);
+    }
+  }
+
+  async function updateQuestionStatus(
+    questionId: string,
+    patch: { published?: boolean; active?: boolean }
+  ) {
+    setQuestionActionId(questionId);
+    setMessage("");
+
+    try {
+      await api(
+        `/api/admin/academic/questions/${questionId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(patch),
+        }
+      );
+
+      await loadManagedQuestions();
+      setMessage("Question status updated.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to update question."
+      );
+    } finally {
+      setQuestionActionId("");
+    }
+  }
+
+  async function deleteManagedQuestion(questionId: string) {
+    const confirmed = window.confirm(
+      "Delete this question permanently?"
+    );
+
+    if (!confirmed) return;
+
+    setQuestionActionId(questionId);
+    setMessage("");
+
+    try {
+      await api(
+        `/api/admin/academic/questions/${questionId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      await loadManagedQuestions();
+      setMessage("Question deleted.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete question."
+      );
+    } finally {
+      setQuestionActionId("");
+    }
+  }
+
   useEffect(() => {
     return onAuthStateChanged(auth, async (user) => {
       if (!user) return;
@@ -164,6 +259,10 @@ export default function AdminQuestionsPage() {
     });
 
     loadSets().catch((error) => {
+      setMessage(error.message);
+    });
+
+    loadManagedQuestions().catch((error) => {
       setMessage(error.message);
     });
   }, [token]);
@@ -960,6 +1059,121 @@ export default function AdminQuestionsPage() {
             )}
           </div>
         )}
+
+        <section
+          className="edu-surface"
+          style={{ padding: 20, marginTop: 30 }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
+            <div>
+              <h2 style={{ margin: 0 }}>Question Management</h2>
+              <p className="edu-text-secondary">
+                Review and manage saved questions.
+              </p>
+            </div>
+
+            <button
+              className="edu-button"
+              disabled={loadingQuestions}
+              onClick={() =>
+                loadManagedQuestions().catch((error) =>
+                  setMessage(error.message)
+                )
+              }
+            >
+              {loadingQuestions ? "Refreshing..." : "Refresh questions"}
+            </button>
+          </div>
+
+          {loadingQuestions ? (
+            <p>Loading questions...</p>
+          ) : managedQuestions.length === 0 ? (
+            <p className="edu-text-secondary">
+              No questions found. Save a question above first.
+            </p>
+          ) : (
+            <div style={{ display: "grid", gap: 16, marginTop: 20 }}>
+              {managedQuestions.map((item) => {
+                const subject = subjects.find(
+                  (entry) => entry.id === item.subjectId
+                );
+                const busy = questionActionId === item.id;
+
+                return (
+                  <article
+                    key={item.id}
+                    style={{
+                      borderTop: "1px solid var(--edu-border)",
+                      paddingTop: 16,
+                    }}
+                  >
+                    <strong>
+                      {item.question || "Untitled question"}
+                    </strong>
+
+                    <p className="edu-text-secondary">
+                      {subject?.name || "Unknown subject"} · {item.category}
+                      {" · "}{item.difficulty}
+                      {item.year ? ` · ${item.year}` : ""}
+                    </p>
+
+                    <p>
+                      Publication: <strong>
+                        {item.published ? "Published" : "Draft"}
+                      </strong>
+                      {" · "}
+                      Availability: <strong>
+                        {item.active ? "Active" : "Inactive"}
+                      </strong>
+                    </p>
+
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        className="edu-button"
+                        disabled={busy}
+                        onClick={() =>
+                          updateQuestionStatus(item.id, {
+                            published: !item.published,
+                          })
+                        }
+                      >
+                        {item.published ? "Unpublish" : "Publish"}
+                      </button>
+
+                      <button
+                        className="edu-button"
+                        disabled={busy}
+                        onClick={() =>
+                          updateQuestionStatus(item.id, {
+                            active: !item.active,
+                          })
+                        }
+                      >
+                        {item.active ? "Deactivate" : "Activate"}
+                      </button>
+
+                      <button
+                        className="edu-button"
+                        disabled={busy}
+                        onClick={() => deleteManagedQuestion(item.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
