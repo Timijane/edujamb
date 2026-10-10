@@ -209,7 +209,9 @@ export function validateQuestionInput(body: Record<string, unknown>) {
     explanationContent: Array.isArray(body.explanationContent)
       ? body.explanationContent
       : [],
-    questionSetId: String(body.questionSetId || "").trim() || undefined,
+    ...(String(body.questionSetId || "").trim()
+      ? { questionSetId: String(body.questionSetId).trim() }
+      : {}),
     year,
     category: category as QuestionCategory,
     difficulty: difficulty as QuestionDifficulty,
