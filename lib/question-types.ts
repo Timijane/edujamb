@@ -212,7 +212,7 @@ export function validateQuestionInput(body: Record<string, unknown>) {
     ...(String(body.questionSetId || "").trim()
       ? { questionSetId: String(body.questionSetId).trim() }
       : {}),
-    year,
+    ...(year !== undefined ? { year } : {}),
     category: category as QuestionCategory,
     difficulty: difficulty as QuestionDifficulty,
     imageUrl: String(body.imageUrl || "").trim(),
